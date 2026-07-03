@@ -3,6 +3,7 @@ package uoc.edu.service;
 import org.springframework.stereotype.Service;
 import uoc.edu.dto.UserRequestDTO;
 import uoc.edu.dto.UserResponseDTO;
+import uoc.edu.exception.InvalidRequestException;
 import uoc.edu.exception.ResourceAlreadyExistsException;
 import uoc.edu.exception.ResourceNotFoundException;
 import uoc.edu.model.Role;
@@ -38,6 +39,7 @@ public class UserService {
         User user = new User();
 
         user.setEmail(userRequestDTO.email());
+        user.setName(userRequestDTO.name());
         user.setPasswordHash(userRequestDTO.passwordHash());//cambiar por seguridad mas tarde
         user.setCreatedAt(LocalDateTime.now());
         user.setRole(Role.USER);
@@ -49,6 +51,13 @@ public class UserService {
     public UserResponseDTO updateUser(Long userId, UserRequestDTO userRequestDTO) {
         User existingUser = findUserEntityById(userId);
 
+        userRepository.findByEmail(userRequestDTO.email())
+                .filter(user -> !user.getId().equals(userId))
+                .ifPresent(user -> {
+                    throw new ResourceAlreadyExistsException(
+                            "A user with this email already exists");
+                });
+        existingUser.setName(userRequestDTO.name());
         existingUser.setEmail(userRequestDTO.email());
         if (userRequestDTO.passwordHash() != null && !userRequestDTO.passwordHash().isBlank()) {
             existingUser.setPasswordHash(userRequestDTO.passwordHash()); // cambiar por BCrypt más tarde
@@ -65,6 +74,9 @@ public class UserService {
 
     public UserResponseDTO changeRole(Long userId, Role role) {
         User user = findUserEntityById(userId);
+        if(user.getRole() == role) {
+            throw new InvalidRequestException("User already has this role");
+        }
         user.setRole(role);
         userRepository.save(user);
 

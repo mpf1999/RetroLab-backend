@@ -52,8 +52,8 @@ public class ConsoleService {
     }
 
     public ConsoleResponseDTO addConsole(ConsoleRequestDTO consoleRequestDTO) {
-        ConsoleModel consoleModel = consoleModelRepository.findById(consoleRequestDTO.consoleModelId()).orElseThrow(()-> new IllegalArgumentException("Console model not found"));
-        User owner = userRepository.findById(consoleRequestDTO.ownerId()).orElseThrow(()-> new IllegalArgumentException("User not found"));
+        ConsoleModel consoleModel = findConsoleModelEntityById(consoleRequestDTO.consoleModelId());
+        User owner = findUserEntityById(consoleRequestDTO.ownerId());
 
         Console console = new Console();
         console.setConsoleModel(consoleModel);
@@ -93,5 +93,14 @@ public class ConsoleService {
 
     private Console findConsoleEntityById(Long id) {
         return consoleRepository.findById(id).orElseThrow(()-> new ResourceNotFoundException("Console not found"));
+    }
+    private ConsoleModel findConsoleModelEntityById(Long id) {
+        return consoleModelRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Console model not found"));
+    }
+
+    private User findUserEntityById(Long id) {
+        return userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
     }
 }

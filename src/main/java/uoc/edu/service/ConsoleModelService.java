@@ -9,6 +9,7 @@ import uoc.edu.model.ConsoleModel;
 import uoc.edu.model.Manufacturer;
 import uoc.edu.repository.ConsoleModelRepository;
 import uoc.edu.repository.ManufacturerRepository;
+import uoc.edu.repository.ConsoleRepository;
 
 import java.time.Year;
 import java.util.List;
@@ -18,10 +19,12 @@ public class ConsoleModelService {
 
     private final ConsoleModelRepository consoleModelRepository;
     private final ManufacturerRepository manufacturerRepository;
+    private final ConsoleRepository consoleRepository;
 
-    public ConsoleModelService(ConsoleModelRepository consoleModelRepository, ManufacturerRepository manufacturerRepository) {
+    public ConsoleModelService(ConsoleModelRepository consoleModelRepository, ManufacturerRepository manufacturerRepository, ConsoleRepository consoleRepository) {
         this.consoleModelRepository = consoleModelRepository;
         this.manufacturerRepository = manufacturerRepository;
+        this.consoleRepository = consoleRepository;
     }
 
     public List<ConsoleModelResponseDTO> getAllConsoleModels() {
@@ -35,6 +38,8 @@ public class ConsoleModelService {
     }
 
     public ConsoleModelResponseDTO addConsoleModel(ConsoleModelRequestDTO consoleModelRequestDTO) {
+        validateReleaseYear(consoleModelRequestDTO.releaseYear());
+
         Manufacturer m = findManufacturerEntityById(consoleModelRequestDTO.manufacturerId());
         ConsoleModel cm = new ConsoleModel();
 
@@ -47,14 +52,13 @@ public class ConsoleModelService {
     }
 
     public ConsoleModelResponseDTO updateConsoleModel(Long id, ConsoleModelRequestDTO consoleModelRequestDTO) {
+        validateReleaseYear(consoleModelRequestDTO.releaseYear());
+
         ConsoleModel existingConsoleModel = findConsoleModelEntityById(id);
-        Manufacturer manufacturer = findManufacturerEntityById(id);
+        Manufacturer manufacturer = findManufacturerEntityById(consoleModelRequestDTO.manufacturerId());
 
         existingConsoleModel.setConsoleModelName(consoleModelRequestDTO.consoleModelName());
         existingConsoleModel.setReleaseYear(consoleModelRequestDTO.releaseYear());
-        if(existingConsoleModel.getReleaseYear() > Year.now().getValue()) {
-            throw new InvalidRequestException("Release year out of range");
-        }
 
         existingConsoleModel.setManufacturer(manufacturer);
         ConsoleModel savedConsoleModel = consoleModelRepository.save(existingConsoleModel);
@@ -63,7 +67,17 @@ public class ConsoleModelService {
 
     public void deleteConsoleModel(Long id) {
         ConsoleModel consoleModel = findConsoleModelEntityById(id);
+        if (consoleRepository.existsByConsoleModelConsoleModelId(id)) {
+            throw new ResourceInUseException(
+                    "Cannot delete a console model with associated consoles");
+        }
         consoleModelRepository.delete(consoleModel);
+    }
+
+    private void validateReleaseYear(Integer releaseYear) {
+        if (releaseYear > Year.now().getValue()) {
+            throw new InvalidRequestException("Release year cannot be in the future");
+        }
     }
 
     private ConsoleModel findConsoleModelEntityById(Long id) {

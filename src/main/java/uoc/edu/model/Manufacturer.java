@@ -18,7 +18,7 @@ public class Manufacturer {
     public Manufacturer(Long manufacturerId, String manufacturerName, String countryCode) {
         this.manufacturerId = manufacturerId;
         this.manufacturerName = manufacturerName;
-        this.countryCode = this.countryCode;
+        this.countryCode = countryCode;
     }
 
     public Manufacturer() {

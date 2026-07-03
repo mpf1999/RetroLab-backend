@@ -3,9 +3,12 @@ package uoc.edu.service;
 import org.springframework.stereotype.Service;
 import uoc.edu.dto.ComponentRequestDTO;
 import uoc.edu.dto.ComponentResponseDTO;
+import uoc.edu.exception.ResourceInUseException;
 import uoc.edu.exception.ResourceNotFoundException;
+import uoc.edu.exception.ResourceAlreadyExistsException;
 import uoc.edu.model.Component;
 import uoc.edu.repository.ComponentRepository;
+import uoc.edu.repository.ComponentTestRepository;
 
 import java.util.List;
 
@@ -13,9 +16,11 @@ import java.util.List;
 public class ComponentService {
 
     private final ComponentRepository componentRepository;
+    private final ComponentTestRepository componentTestRepository;
 
-    public ComponentService(ComponentRepository componentRepository) {
+    public ComponentService(ComponentRepository componentRepository, ComponentTestRepository componentTestRepository) {
         this.componentRepository = componentRepository;
+        this.componentTestRepository = componentTestRepository;
     }
 
     public List<ComponentResponseDTO> getAllComponents() {
@@ -28,6 +33,13 @@ public class ComponentService {
     }
 
     public ComponentResponseDTO addComponent(ComponentRequestDTO componentRequestDTO) {
+
+        componentRepository.findByName(componentRequestDTO.name())
+                .ifPresent(component -> {
+                    throw new ResourceAlreadyExistsException(
+                            "A component with this name already exists");
+                });
+
         Component component = new Component();
 
         component.setName(componentRequestDTO.name());
@@ -37,11 +49,19 @@ public class ComponentService {
         return mapToResponseDTO(savedComponent);
     }
 
-    public ComponentResponseDTO updateComponent(Long id, ComponentRequestDTO componentrequestDTO) {
+    public ComponentResponseDTO updateComponent(Long id, ComponentRequestDTO componentRequestDTO) {
+
+        componentRepository.findByName(componentRequestDTO.name())
+                .filter(component -> !component.getComponentId().equals(id))
+                .ifPresent(component -> {
+                    throw new ResourceAlreadyExistsException(
+                            "A component with this name already exists");
+                });
+
         Component existingComponent = findComponentEntityById(id);
 
-        existingComponent.setName(componentrequestDTO.name());
-        existingComponent.setDescription(componentrequestDTO.description());
+        existingComponent.setName(componentRequestDTO.name());
+        existingComponent.setDescription(componentRequestDTO.description());
 
         Component updatedComponent = componentRepository.save(existingComponent);
         return mapToResponseDTO(updatedComponent);
@@ -49,6 +69,11 @@ public class ComponentService {
 
     public void deleteComponent(Long id) {
         Component component = findComponentEntityById(id);
+        if (componentTestRepository.existsByComponentComponentId(id)) {
+            throw new ResourceInUseException(
+                    "Cannot delete a component with associated component tests"
+            );
+        }
         componentRepository.delete(component);
     }
 

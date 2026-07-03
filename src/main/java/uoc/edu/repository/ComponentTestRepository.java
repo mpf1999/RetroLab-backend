@@ -7,7 +7,11 @@ import java.util.List;
 
 public interface ComponentTestRepository extends JpaRepository<ComponentTest, Long> {
 
-    List<ComponentTest> findByRepairCaseId(Long repairCaseId);
+    List<ComponentTest> findByRepairCaseRepairCaseId(Long repairCaseId);
 
-    List<ComponentTest> findByComponentId(Long componentId);
+    List<ComponentTest> findByComponentComponentId(Long componentId);
+
+    boolean existsByComponentComponentId(Long componentId);
+
+    boolean existsByRepairCaseRepairCaseId(Long repairCaseId);
 }

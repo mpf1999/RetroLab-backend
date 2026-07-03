@@ -29,6 +29,13 @@ public class GlobalExceptionHandler {
     ){
         return buildErrorResponse(ex, request, HttpStatus.CONFLICT);
     }
+    @ExceptionHandler(ResourceInUseException.class)
+    public ResponseEntity<ApiError> handleResourceInUse(
+            ResourceInUseException ex,
+            HttpServletRequest request
+    ){
+        return buildErrorResponse(ex, request, HttpStatus.CONFLICT);
+    }
     @ExceptionHandler(InvalidRequestException.class)
     public ResponseEntity<ApiError> handleInvalidRequest(
             InvalidRequestException ex,

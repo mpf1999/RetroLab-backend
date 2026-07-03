@@ -3,13 +3,15 @@ package uoc.edu.service;
 import org.springframework.stereotype.Service;
 import uoc.edu.dto.RepairCaseRequestDTO;
 import uoc.edu.dto.RepairCaseResponseDTO;
-import uoc.edu.dto.UserResponseDTO;
+import uoc.edu.exception.ResourceInUseException;
 import uoc.edu.exception.ResourceNotFoundException;
+import uoc.edu.exception.InvalidRequestException;
 import uoc.edu.model.Console;
 import uoc.edu.model.RepairCase;
 import uoc.edu.model.RepairStatus;
 import uoc.edu.repository.ConsoleRepository;
 import uoc.edu.repository.RepairCaseRepository;
+import uoc.edu.repository.ComponentTestRepository;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -20,9 +22,12 @@ public class RepairCaseService {
     private final RepairCaseRepository repairCaseRepository;
     private final ConsoleRepository consoleRepository;
 
-    public RepairCaseService(RepairCaseRepository repairCaseRepository, ConsoleRepository consoleRepository) {
+    private final ComponentTestRepository componentTestRepository;
+
+    public RepairCaseService(RepairCaseRepository repairCaseRepository, ConsoleRepository consoleRepository, ComponentTestRepository componentTestRepository) {
         this.repairCaseRepository = repairCaseRepository;
         this.consoleRepository = consoleRepository;
+        this.componentTestRepository = componentTestRepository;
     }
 
     public List<RepairCaseResponseDTO> getAllRepairCases() {
@@ -40,6 +45,11 @@ public class RepairCaseService {
     }
 
     public RepairCaseResponseDTO addRepairCase(RepairCaseRequestDTO repairCaseRequestDTO) {
+
+        if (repairCaseRequestDTO.status() == RepairStatus.CLOSED) {
+            throw new InvalidRequestException("A new repair case cannot be created as CLOSED");
+        }
+
         Console console = findConsoleEntityCaseById(repairCaseRequestDTO.consoleId());
         RepairCase repairCase = new RepairCase();
 
@@ -48,6 +58,11 @@ public class RepairCaseService {
         repairCase.setStatus(repairCaseRequestDTO.status());
         repairCase.setStartDate(LocalDateTime.now());
         repairCase.setEndDate(null);
+        validateRepairDates(
+                repairCase.getStartDate(),
+                repairCase.getEndDate()
+        );
+
         repairCase.setConsole(console);
 
         RepairCase savedRepairCase = repairCaseRepository.save(repairCase);
@@ -58,6 +73,10 @@ public class RepairCaseService {
 
     public RepairCaseResponseDTO updateRepairCase(Long id, RepairCaseRequestDTO repairCaseRequestDTO) {
         RepairCase existingRepairCase = findRepairEntityCaseById(id);
+
+        if (existingRepairCase.getStatus() == RepairStatus.CLOSED) {
+            throw new InvalidRequestException("Closed repair cases cannot be modified");
+        }
 
         existingRepairCase.setTitle(repairCaseRequestDTO.title());
         existingRepairCase.setDescription(repairCaseRequestDTO.description());
@@ -70,12 +89,21 @@ public class RepairCaseService {
             existingRepairCase.setEndDate(LocalDateTime.now());
         }
 
+        validateRepairDates(
+                existingRepairCase.getStartDate(),
+                existingRepairCase.getEndDate()
+        );
+
         RepairCase savedRepairCase = repairCaseRepository.save(existingRepairCase);
         return mapToResponseDTO(savedRepairCase);
     }
 
     public void deleteRepairCase(Long id) {
         RepairCase repairCase = findRepairEntityCaseById(id);
+        if (componentTestRepository.existsByRepairCaseRepairCaseId(id)) {
+            throw new ResourceInUseException(
+                    "Cannot delete a repair case with associated component tests");
+        }
 
         repairCaseRepository.delete(repairCase);
     }
@@ -85,6 +113,14 @@ public class RepairCaseService {
     private Console findConsoleEntityCaseById(Long id) {
         return consoleRepository.findById(id).orElseThrow(()-> new ResourceNotFoundException("Console not found"));
     }
+
+    private void validateRepairDates(LocalDateTime startDate, LocalDateTime endDate) {
+        if (endDate != null && startDate.isAfter(endDate)) {
+            throw new InvalidRequestException(
+                    "Start date cannot be after end date");
+        }
+    }
+
     private RepairCaseResponseDTO mapToResponseDTO(RepairCase repairCase) {
         return new RepairCaseResponseDTO(
                 repairCase.getRepairCaseId(),

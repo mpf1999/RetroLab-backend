@@ -3,12 +3,12 @@ package uoc.edu.service;
 import org.springframework.stereotype.Service;
 import uoc.edu.dto.ComponentTestRequestDTO;
 import uoc.edu.dto.ComponentTestResponseDTO;
+import uoc.edu.exception.ResourceNotFoundException;
 import uoc.edu.model.Component;
 import uoc.edu.model.ComponentTest;
 import uoc.edu.model.RepairCase;
 import uoc.edu.repository.ComponentRepository;
 import uoc.edu.repository.ComponentTestRepository;
-import uoc.edu.repository.ConsoleModelRepository;
 import uoc.edu.repository.RepairCaseRepository;
 
 import java.util.List;
@@ -20,7 +20,7 @@ public class ComponentTestService {
     private final RepairCaseRepository repairCaseRepository;
     private final ComponentRepository componentRepository;
 
-    public ComponentTestService(ComponentTestRepository componentTestRepository, ConsoleModelRepository consoleModelRepository, RepairCaseRepository repairCaseRepository, ComponentRepository componentRepository) {
+    public ComponentTestService(ComponentTestRepository componentTestRepository, RepairCaseRepository repairCaseRepository, ComponentRepository componentRepository) {
         this.componentTestRepository = componentTestRepository;
         this.repairCaseRepository = repairCaseRepository;
         this.componentRepository = componentRepository;
@@ -52,13 +52,15 @@ public class ComponentTestService {
     }
 
     public List<ComponentTestResponseDTO> getComponentTestsByRepairCaseId(Long repairCaseId) {
-        return componentTestRepository.findByRepairCaseId(repairCaseId).stream().map(this::mapToResponseDTO).toList();
+        return componentTestRepository.findByRepairCaseRepairCaseId(repairCaseId).stream().map(this::mapToResponseDTO).toList();
     }
 
     public ComponentTestResponseDTO addComponentTest(ComponentTestRequestDTO componentTestRequestDTO) {
-        ComponentTest componentTest = new ComponentTest();
+
         RepairCase repairCase = findRepairCaseEntityById(componentTestRequestDTO.repairCaseId());
         Component component = findComponentEntityById(componentTestRequestDTO.componentId());
+
+        ComponentTest componentTest = new ComponentTest();
 
         componentTest.setRepairCase(repairCase);
         componentTest.setComponent(component);
@@ -95,20 +97,22 @@ public class ComponentTestService {
     }
 
     public void deleteComponentTest(Long id) {
-        componentTestRepository.deleteById(id);
+
+        ComponentTest componentTest = findComponentTestEntityById(id);
+        componentTestRepository.delete(componentTest);
     }
 
     public List<ComponentTestResponseDTO> getComponentTestsByComponentId(Long componentId) {
-        return componentTestRepository.findByComponentId(componentId).stream().map(this::mapToResponseDTO).toList();
+        return componentTestRepository.findByComponentComponentId(componentId).stream().map(this::mapToResponseDTO).toList();
     }
 
     private ComponentTest findComponentTestEntityById(Long componentId) {
-        return componentTestRepository.findById(componentId).orElseThrow(() -> new RuntimeException("Component test not found"));
+        return componentTestRepository.findById(componentId).orElseThrow(() -> new ResourceNotFoundException("Component test not found"));
     }
     private Component findComponentEntityById(Long componentId) {
-        return componentRepository.findById(componentId).orElseThrow(() -> new RuntimeException("Component not found"));
+        return componentRepository.findById(componentId).orElseThrow(() -> new ResourceNotFoundException("Component not found"));
     }
     private RepairCase findRepairCaseEntityById(Long repairCaseId) {
-        return repairCaseRepository.findById(repairCaseId).orElseThrow(() -> new RuntimeException("RepairCase not found"));
+        return repairCaseRepository.findById(repairCaseId).orElseThrow(() -> new ResourceNotFoundException("RepairCase not found"));
     }
 }

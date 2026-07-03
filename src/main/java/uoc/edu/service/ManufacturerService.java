@@ -3,9 +3,12 @@ package uoc.edu.service;
 import org.springframework.stereotype.Service;
 import uoc.edu.dto.ManufacturerRequestDTO;
 import uoc.edu.dto.ManufacturerResponseDTO;
+import uoc.edu.exception.ResourceAlreadyExistsException;
+import uoc.edu.exception.ResourceInUseException;
 import uoc.edu.exception.ResourceNotFoundException;
 import uoc.edu.model.Manufacturer;
 import uoc.edu.repository.ManufacturerRepository;
+import uoc.edu.repository.ConsoleModelRepository;
 
 import java.util.List;
 
@@ -13,9 +16,11 @@ import java.util.List;
 public class ManufacturerService {
 
     private final ManufacturerRepository manufacturerRepository;
+    private final ConsoleModelRepository consoleModelRepository;
 
-    public ManufacturerService(ManufacturerRepository manufacturerRepository) {
+    public ManufacturerService(ManufacturerRepository manufacturerRepository, ConsoleModelRepository consoleModelRepository) {
         this.manufacturerRepository = manufacturerRepository;
+        this.consoleModelRepository = consoleModelRepository;
     }
 
     public List<ManufacturerResponseDTO> getAllManufacturers() {
@@ -30,6 +35,12 @@ public class ManufacturerService {
     public ManufacturerResponseDTO addManufacturer(ManufacturerRequestDTO manufacturer) {
         Manufacturer m = new Manufacturer();
 
+        manufacturerRepository.findByManufacturerName(m.getManufacturerName())
+                .ifPresent(existing -> {
+                    throw new ResourceAlreadyExistsException(
+                            "A manufacturer with this name already exists");
+                });
+
         m.setManufacturerName(manufacturer.manufacturerName());
         m.setCountryCode(manufacturer.countryCode());
 
@@ -40,6 +51,12 @@ public class ManufacturerService {
     public ManufacturerResponseDTO updateManufacturer(Long id, ManufacturerRequestDTO manufacturerRequestDTO) {
         Manufacturer existingManufacturer = findManufacturerEntityById(id);
 
+        manufacturerRepository.findByManufacturerName(manufacturerRequestDTO.manufacturerName())
+                .filter(existing -> !existing.getManufacturerId().equals(id))
+                .ifPresent(existing -> {
+                    throw new ResourceAlreadyExistsException(
+                            "A manufacturer with this name already exists");
+                });
         existingManufacturer.setManufacturerName(manufacturerRequestDTO.manufacturerName());
         existingManufacturer.setCountryCode(manufacturerRequestDTO.countryCode());
         Manufacturer updatedManufacturer = manufacturerRepository.save(existingManufacturer);
@@ -48,6 +65,12 @@ public class ManufacturerService {
 
     public void deleteManufacturer(Long id) {
         Manufacturer manufacturer = findManufacturerEntityById(id);
+
+        if (consoleModelRepository.existsByManufacturerManufacturerId(id)) {
+            throw new ResourceInUseException(
+                    "Cannot delete a manufacturer with associated console models");
+        }
+
         manufacturerRepository.delete(manufacturer);
     }
 
