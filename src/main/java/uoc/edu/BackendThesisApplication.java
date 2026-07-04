@@ -12,9 +12,4 @@ public class BackendThesisApplication {
     public static void main(String[] args) {
         SpringApplication.run(BackendThesisApplication.class, args);
     }
-    @GetMapping
-    public String helloWorld() {
-        return "Hello World";
-    }
-
 }

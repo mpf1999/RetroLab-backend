@@ -41,7 +41,7 @@ public class RepairCaseService {
     }
 
     public List<RepairCaseResponseDTO> getRepairCasesByConsoleId(Long consoleId) {
-        return repairCaseRepository.findByConsoleId(consoleId).stream().map(this::mapToResponseDTO).toList();
+        return repairCaseRepository.findByConsoleConsoleId(consoleId).stream().map(this::mapToResponseDTO).toList();
     }
 
     public RepairCaseResponseDTO addRepairCase(RepairCaseRequestDTO repairCaseRequestDTO) {

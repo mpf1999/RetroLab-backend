@@ -4,6 +4,7 @@ import org.springframework.stereotype.Service;
 import uoc.edu.dto.ConsoleModelRequestDTO;
 import uoc.edu.dto.ConsoleModelResponseDTO;
 import uoc.edu.exception.InvalidRequestException;
+import uoc.edu.exception.ResourceInUseException;
 import uoc.edu.exception.ResourceNotFoundException;
 import uoc.edu.model.ConsoleModel;
 import uoc.edu.model.Manufacturer;
