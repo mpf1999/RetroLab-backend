@@ -6,7 +6,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import uoc.edu.dto.ConsoleModelRequestDTO;
 import uoc.edu.dto.ConsoleModelResponseDTO;
-import uoc.edu.model.ConsoleModel;
 import uoc.edu.service.ConsoleModelService;
 
 import java.util.List;

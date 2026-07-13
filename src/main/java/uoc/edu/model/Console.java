@@ -10,10 +10,15 @@ public class Console {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long consoleId;
 
+    @Column(nullable = false, unique = true)
     private String serialNumber;
+
     private String region;
     private String color;
-    private String status;
+
+    @Enumerated(EnumType.STRING)
+    private Status status;
+
     private BigDecimal estimatedValue;
     @Column(columnDefinition = "TEXT")
     private String notes;
@@ -26,12 +31,13 @@ public class Console {
     @JoinColumn(name = "owner_id")
     private User owner;
 
-    private String condition;
+    @Enumerated(EnumType.STRING)
+    private Condition condition;
 
     public Console() {
     }
 
-    public Console(Long consoleId, String serialNumber, String region, String color, String status, BigDecimal estimatedValue, String notes, ConsoleModel consoleModel, User owner, String condition) {
+    public Console(Long consoleId, String serialNumber, String region, String color, Status status, BigDecimal estimatedValue, String notes, ConsoleModel consoleModel, User owner, Condition condition) {
         this.consoleId = consoleId;
         this.serialNumber = serialNumber;
         this.region = region;
@@ -52,11 +58,11 @@ public class Console {
         this.owner = owner;
     }
 
-    public String getCondition() {
+    public Condition getCondition() {
         return condition;
     }
 
-    public void setCondition(String condition) {
+    public void setCondition(Condition condition) {
         this.condition = condition;
     }
 
@@ -92,11 +98,11 @@ public class Console {
         this.color = color;
     }
 
-    public String getStatus() {
+    public Status getStatus() {
         return status;
     }
 
-    public void setStatus(String status) {
+    public void setStatus(Status status) {
         this.status = status;
     }
 

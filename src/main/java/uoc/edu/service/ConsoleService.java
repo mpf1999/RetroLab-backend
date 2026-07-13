@@ -3,6 +3,7 @@ package uoc.edu.service;
 import org.springframework.stereotype.Service;
 import uoc.edu.dto.ConsoleRequestDTO;
 import uoc.edu.dto.ConsoleResponseDTO;
+import uoc.edu.exception.ResourceAlreadyExistsException;
 import uoc.edu.exception.ResourceNotFoundException;
 import uoc.edu.model.Console;
 import uoc.edu.model.ConsoleModel;
@@ -46,6 +47,7 @@ public class ConsoleService {
                 console.getRegion(),
                 console.getColor(),
                 console.getCondition(),
+                console.getEstimatedValue(),
                 console.getStatus(),
                 console.getNotes()
         );
@@ -55,6 +57,10 @@ public class ConsoleService {
         ConsoleModel consoleModel = findConsoleModelEntityById(consoleRequestDTO.consoleModelId());
         User owner = findUserEntityById(consoleRequestDTO.ownerId());
 
+        if(consoleRepository.findBySerialNumber(consoleRequestDTO.serialNumber()).isPresent()){
+            throw new ResourceAlreadyExistsException("Console with serial number " + consoleRequestDTO.serialNumber() + " already exists");
+        }
+
         Console console = new Console();
         console.setConsoleModel(consoleModel);
         console.setOwner(owner);
@@ -62,6 +68,7 @@ public class ConsoleService {
         console.setRegion(consoleRequestDTO.region());
         console.setColor(consoleRequestDTO.color());
         console.setCondition(consoleRequestDTO.condition());
+        console.setEstimatedValue(consoleRequestDTO.estimatedPrice());
         console.setStatus(consoleRequestDTO.status());
         console.setNotes(consoleRequestDTO.notes());
 
@@ -74,11 +81,17 @@ public class ConsoleService {
         Console existingConsole = findConsoleEntityById(id);
         ConsoleModel consoleModel = consoleModelRepository.findById(consoleRequestDTO.consoleModelId()).orElseThrow(()-> new IllegalArgumentException("Console model not found"));
 
+        consoleRepository.findBySerialNumber(consoleRequestDTO.serialNumber()).filter(console-> !console.getConsoleId().equals(id)).ifPresent(
+                console -> {
+                    throw new ResourceAlreadyExistsException(consoleRequestDTO.serialNumber());
+                }
+        );
         existingConsole.setConsoleModel(consoleModel);
         existingConsole.setSerialNumber(consoleRequestDTO.serialNumber());
         existingConsole.setRegion(consoleRequestDTO.region());
         existingConsole.setColor(consoleRequestDTO.color());
         existingConsole.setCondition(consoleRequestDTO.condition());
+        existingConsole.setEstimatedValue(consoleRequestDTO.estimatedPrice());
         existingConsole.setStatus(consoleRequestDTO.status());
         existingConsole.setNotes(consoleRequestDTO.notes());
 

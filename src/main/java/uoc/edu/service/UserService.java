@@ -1,8 +1,10 @@
 package uoc.edu.service;
 
 import org.springframework.stereotype.Service;
+import uoc.edu.dto.ChangeRoleRequestDTO;
 import uoc.edu.dto.UserRequestDTO;
 import uoc.edu.dto.UserResponseDTO;
+import uoc.edu.exception.HttpMessageNotReadableException;
 import uoc.edu.exception.InvalidRequestException;
 import uoc.edu.exception.ResourceAlreadyExistsException;
 import uoc.edu.exception.ResourceNotFoundException;
@@ -42,7 +44,7 @@ public class UserService {
         user.setName(userRequestDTO.name());
         user.setPasswordHash(userRequestDTO.passwordHash());//cambiar por seguridad mas tarde
         user.setCreatedAt(LocalDateTime.now());
-        user.setRole(Role.USER);
+        user.setRole(userRequestDTO.role());
 
         User savedUser = userRepository.save(user);
         return mapToResponseDTO(savedUser);
@@ -72,12 +74,13 @@ public class UserService {
         userRepository.delete(user);
     }
 
-    public UserResponseDTO changeRole(Long userId, Role role) {
+    public UserResponseDTO changeRole(Long userId, ChangeRoleRequestDTO roleRequestDTO) {
         User user = findUserEntityById(userId);
-        if(user.getRole() == role) {
+        if(user.getRole() == roleRequestDTO.role()) {
             throw new InvalidRequestException("User already has this role");
         }
-        user.setRole(role);
+
+        user.setRole(roleRequestDTO.role());
         userRepository.save(user);
 
         return mapToResponseDTO(user);

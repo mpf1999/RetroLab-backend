@@ -16,8 +16,10 @@ public class ComponentTest {
     private BigDecimal measuredCurrent;
     private BigDecimal measuredResistance;
     private BigDecimal temperature;
+    @Column(nullable = false)
     private TestResult result;
     private String notes;
+    @Column(nullable = false)
     private LocalDateTime testDate;
 
     @ManyToOne

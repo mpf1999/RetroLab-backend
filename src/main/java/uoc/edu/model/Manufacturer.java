@@ -1,9 +1,9 @@
 package uoc.edu.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 public class Manufacturer {
@@ -12,13 +12,27 @@ public class Manufacturer {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long manufacturerId;
 
+    @Column(nullable = false, unique = true)
     private String manufacturerName;
+    @Column(nullable = false)
     private String countryCode;
 
-    public Manufacturer(Long manufacturerId, String manufacturerName, String countryCode) {
+    @OneToMany(mappedBy = "manufacturer")
+    private List<ConsoleModel> consoleModels = new ArrayList<>();
+
+    public Manufacturer(Long manufacturerId, String manufacturerName, String countryCode, List<ConsoleModel> consoleModels) {
         this.manufacturerId = manufacturerId;
         this.manufacturerName = manufacturerName;
         this.countryCode = countryCode;
+        this.consoleModels = consoleModels;
+    }
+
+    public List<ConsoleModel> getConsoleModels() {
+        return consoleModels;
+    }
+
+    public void setConsoleModels(List<ConsoleModel> consoleModels) {
+        this.consoleModels = consoleModels;
     }
 
     public Manufacturer() {

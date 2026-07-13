@@ -4,6 +4,7 @@ import org.springframework.stereotype.Service;
 import uoc.edu.dto.ConsoleModelRequestDTO;
 import uoc.edu.dto.ConsoleModelResponseDTO;
 import uoc.edu.exception.InvalidRequestException;
+import uoc.edu.exception.ResourceAlreadyExistsException;
 import uoc.edu.exception.ResourceInUseException;
 import uoc.edu.exception.ResourceNotFoundException;
 import uoc.edu.model.ConsoleModel;
@@ -44,6 +45,9 @@ public class ConsoleModelService {
         Manufacturer m = findManufacturerEntityById(consoleModelRequestDTO.manufacturerId());
         ConsoleModel cm = new ConsoleModel();
 
+        consoleModelRepository.findByConsoleModelName(consoleModelRequestDTO.consoleModelName()).ifPresent(existing -> {
+            throw new ResourceAlreadyExistsException("Console with name " + consoleModelRequestDTO.consoleModelName() + " already exists");
+        });
         cm.setReleaseYear(consoleModelRequestDTO.releaseYear());
         cm.setConsoleModelName(consoleModelRequestDTO.consoleModelName());
         cm.setManufacturer(m);
@@ -55,6 +59,12 @@ public class ConsoleModelService {
     public ConsoleModelResponseDTO updateConsoleModel(Long id, ConsoleModelRequestDTO consoleModelRequestDTO) {
         validateReleaseYear(consoleModelRequestDTO.releaseYear());
 
+        consoleModelRepository.findByConsoleModelName(consoleModelRequestDTO.consoleModelName())
+                .filter(consoleModel -> !consoleModel.getConsoleModelId().equals(id))
+                .ifPresent(consoleModel -> {
+                    throw new ResourceAlreadyExistsException(
+                            "A console model with name " + consoleModel.getConsoleModelName() + " already exists");
+                });
         ConsoleModel existingConsoleModel = findConsoleModelEntityById(id);
         Manufacturer manufacturer = findManufacturerEntityById(consoleModelRequestDTO.manufacturerId());
 

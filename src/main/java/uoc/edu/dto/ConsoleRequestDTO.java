@@ -1,8 +1,10 @@
 package uoc.edu.dto;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
+import uoc.edu.model.Condition;
+import uoc.edu.model.Status;
+
+import java.math.BigDecimal;
 
 public record ConsoleRequestDTO (
         @NotNull(message = "Owner ID cannot be null")
@@ -22,11 +24,16 @@ public record ConsoleRequestDTO (
         @Size(max = 30)
         String color,
 
+        @NotNull(message = "Estimated price is required")
+        @DecimalMin(value = "0.0", message = "Estimated price cannot be negative")
+        @Digits(integer = 5, fraction = 2)
+        BigDecimal estimatedPrice,
+
         @NotNull(message = "Condition is required")
-        String condition,
+        Condition condition,
 
         @NotNull(message = "Status is required")
-        String status,
+        Status status,
 
         @Size(max = 2000, message = "Maximum length is 2000 characters")
         String notes){

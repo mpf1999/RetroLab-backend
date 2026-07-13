@@ -49,7 +49,7 @@ public class UserController {
     }
 
     @PatchMapping("{userId}/role")
-    public ResponseEntity<UserResponseDTO> changeUserRole(@PathVariable Long userId, @RequestBody ChangeRoleRequestDTO role) {
-        return ResponseEntity.ok(userService.changeRole(userId, role.role()));
+    public ResponseEntity<UserResponseDTO> changeUserRole(@PathVariable Long userId,@Valid @RequestBody ChangeRoleRequestDTO role) {
+        return ResponseEntity.ok(userService.changeRole(userId, role));
     }
 }

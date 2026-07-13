@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 
 import java.time.LocalDateTime;
 
@@ -58,6 +59,36 @@ public class GlobalExceptionHandler {
             HttpServletRequest request
     ){
         return buildErrorResponse(ex, request, HttpStatus.FORBIDDEN);
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ApiError> handleHttpMessageNotReadable(
+            HttpMessageNotReadableException ex,
+            HttpServletRequest request
+    ){
+        String message = "Malformed JSON request.";
+
+        Throwable cause = ex.getMostSpecificCause();
+
+        String causeMessage = cause.getMessage();
+
+        if (causeMessage.contains("Role")) {
+            message = "Invalid role. Allowed values are USER or ADMIN.";
+        } else if (causeMessage.contains("Status")) {
+            message = "Invalid status. Allowed values are AVAILABLE, IN_REPAIR, REPAIRED, RETURNED, SOLD, and ARCHIVED.";
+        } else if (causeMessage.contains("Condition")) {
+            message = "Invalid condition. Allowed values are EXCELLENT, GOOD, FAIR, POOR and BROKEN.";
+        }
+
+        ApiError error = new ApiError(
+                LocalDateTime.now(),
+                HttpStatus.BAD_REQUEST.value(),
+                "Bad Request",
+                message,
+                request.getRequestURI()
+        );
+
+        return ResponseEntity.badRequest().body(error);
     }
 
     @ExceptionHandler(Exception.class)

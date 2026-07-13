@@ -32,19 +32,19 @@ public class ManufacturerService {
         return mapToResponseDTO(m);
     }
 
-    public ManufacturerResponseDTO addManufacturer(ManufacturerRequestDTO manufacturer) {
-        Manufacturer m = new Manufacturer();
+    public ManufacturerResponseDTO addManufacturer(ManufacturerRequestDTO manufacturerRequestDTO) {
+        Manufacturer manufacturer = new Manufacturer();
 
-        manufacturerRepository.findByManufacturerName(m.getManufacturerName())
+        manufacturerRepository.findByManufacturerName(manufacturerRequestDTO.manufacturerName())
                 .ifPresent(existing -> {
                     throw new ResourceAlreadyExistsException(
                             "A manufacturer with this name already exists");
                 });
 
-        m.setManufacturerName(manufacturer.manufacturerName());
-        m.setCountryCode(manufacturer.countryCode());
+        manufacturer.setManufacturerName(manufacturerRequestDTO.manufacturerName());
+        manufacturer.setCountryCode(manufacturerRequestDTO.countryCode());
 
-        Manufacturer savedManufacturer = manufacturerRepository.save(m);
+        Manufacturer savedManufacturer = manufacturerRepository.save(manufacturer);
         return mapToResponseDTO(savedManufacturer);
     }
 

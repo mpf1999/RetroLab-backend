@@ -7,6 +7,7 @@ public class Component {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long componentId;
+    @Column(nullable = false)
     private String name;
 
     @Column(columnDefinition = "TEXT")

@@ -1,5 +1,10 @@
 package uoc.edu.dto;
 
+import uoc.edu.model.Condition;
+import uoc.edu.model.Status;
+
+import java.math.BigDecimal;
+
 public record ConsoleResponseDTO(Long consoleId,
                                  Long consoleModelId,
                                  String consoleModelName,
@@ -7,8 +12,9 @@ public record ConsoleResponseDTO(Long consoleId,
                                  String serialNumber,
                                  String region,
                                  String color,
-                                 String condition,
-                                 String status,
+                                 Condition condition,
+                                 BigDecimal estimatedPrice,
+                                 Status status,
                                  String notes
                                  ) {
 }

@@ -18,7 +18,10 @@ public class RepairCase {
     private String description;
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private RepairStatus status;
+
+    @Column(nullable = false)
     private LocalDateTime startDate;
     private LocalDateTime endDate;
 
