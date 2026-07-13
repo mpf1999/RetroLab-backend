@@ -81,9 +81,9 @@ public class ConsoleService {
         Console existingConsole = findConsoleEntityById(id);
         ConsoleModel consoleModel = consoleModelRepository.findById(consoleRequestDTO.consoleModelId()).orElseThrow(()-> new IllegalArgumentException("Console model not found"));
 
-        consoleRepository.findBySerialNumber(consoleRequestDTO.serialNumber()).filter(console-> !console.getConsoleId().equals(id)).ifPresent(
+        consoleRepository. findBySerialNumber(consoleRequestDTO.serialNumber()).filter(console-> !console.getConsoleId().equals(id)).ifPresent(
                 console -> {
-                    throw new ResourceAlreadyExistsException(consoleRequestDTO.serialNumber());
+                    throw new ResourceAlreadyExistsException("Trying to update with invalid serialNumber " + consoleRequestDTO.serialNumber() + " belonging to console with id " + id);
                 }
         );
         existingConsole.setConsoleModel(consoleModel);
@@ -101,7 +101,8 @@ public class ConsoleService {
     }
 
     public void deleteConsole(Long id) {
-        consoleRepository.deleteById(id);
+        Console console = findConsoleEntityById(id);
+        consoleRepository.delete(console);
     }
 
     private Console findConsoleEntityById(Long id) {
