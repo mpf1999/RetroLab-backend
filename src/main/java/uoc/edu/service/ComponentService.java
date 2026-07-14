@@ -7,8 +7,10 @@ import uoc.edu.exception.ResourceInUseException;
 import uoc.edu.exception.ResourceNotFoundException;
 import uoc.edu.exception.ResourceAlreadyExistsException;
 import uoc.edu.model.Component;
+import uoc.edu.model.ConsoleModel;
 import uoc.edu.repository.ComponentRepository;
 import uoc.edu.repository.ComponentTestRepository;
+import uoc.edu.repository.ConsoleModelRepository;
 
 import java.util.List;
 
@@ -17,10 +19,12 @@ public class ComponentService {
 
     private final ComponentRepository componentRepository;
     private final ComponentTestRepository componentTestRepository;
+    private final ConsoleModelRepository consoleModelRepository;
 
-    public ComponentService(ComponentRepository componentRepository, ComponentTestRepository componentTestRepository) {
+    public ComponentService(ComponentRepository componentRepository, ComponentTestRepository componentTestRepository, ConsoleModelRepository consoleModelRepository) {
         this.componentRepository = componentRepository;
         this.componentTestRepository = componentTestRepository;
+        this.consoleModelRepository = consoleModelRepository;
     }
 
     public List<ComponentResponseDTO> getAllComponents() {
@@ -40,10 +44,14 @@ public class ComponentService {
                             "A component with this name already exists");
                 });
 
+
+        ConsoleModel consoleModel = findConsoleModelById(componentRequestDTO.consoleModelId());
+
         Component component = new Component();
 
         component.setName(componentRequestDTO.name());
         component.setDescription(componentRequestDTO.description());
+        component.setConsoleModel(consoleModel);
 
         Component savedComponent = componentRepository.save(component);
         return mapToResponseDTO(savedComponent);
@@ -79,6 +87,10 @@ public class ComponentService {
 
     private Component findComponentEntityById(Long id) {
         return componentRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Component not found"));
+    }
+
+    private ConsoleModel findConsoleModelById(Long id) {
+        return consoleModelRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Console model not found"));
     }
 
     private ComponentResponseDTO mapToResponseDTO(Component component) {

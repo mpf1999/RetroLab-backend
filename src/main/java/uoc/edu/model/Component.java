@@ -13,10 +13,15 @@ public class Component {
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    public Component(Long componentId, String name, String description) {
+    @ManyToOne
+    @JoinColumn(name = "console_model_id", nullable = false)
+    private ConsoleModel consoleModel;
+
+    public Component(Long componentId, String name, String description, ConsoleModel consoleModel) {
         this.componentId = componentId;
         this.name = name;
         this.description = description;
+        this.consoleModel = consoleModel;
     }
     public Component() {
 
@@ -44,5 +49,13 @@ public class Component {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public ConsoleModel getConsoleModel() {
+        return consoleModel;
+    }
+
+    public void setConsoleModel(ConsoleModel consoleModel) {
+        this.consoleModel = consoleModel;
     }
 }

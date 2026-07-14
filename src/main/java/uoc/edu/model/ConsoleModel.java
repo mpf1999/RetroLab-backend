@@ -1,7 +1,7 @@
 package uoc.edu.model;
 
 import jakarta.persistence.*;
-
+import java.util.List;
 @Entity
 public class ConsoleModel {
 
@@ -16,6 +16,9 @@ public class ConsoleModel {
     @ManyToOne
     @JoinColumn(name = "manufacturer_id")
     private Manufacturer manufacturer;
+
+    @OneToMany(mappedBy = "consoleModel")
+    private List<Component> components;
 
     public ConsoleModel(Long consoleModelId, String consoleModelName, Integer releaseYear, Manufacturer manufacturer) {
         this.consoleModelId = consoleModelId;
