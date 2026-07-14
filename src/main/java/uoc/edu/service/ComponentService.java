@@ -70,7 +70,7 @@ public class ComponentService {
 
         existingComponent.setName(componentRequestDTO.name());
         existingComponent.setDescription(componentRequestDTO.description());
-
+        existingComponent.setConsoleModel(findConsoleModelById(componentRequestDTO.consoleModelId()));
         Component updatedComponent = componentRepository.save(existingComponent);
         return mapToResponseDTO(updatedComponent);
     }
@@ -96,6 +96,7 @@ public class ComponentService {
     private ComponentResponseDTO mapToResponseDTO(Component component) {
         return new ComponentResponseDTO(
                 component.getComponentId(),
+                component.getConsoleModel().getConsoleModelId(),
                 component.getName(),
                 component.getDescription()
         );
