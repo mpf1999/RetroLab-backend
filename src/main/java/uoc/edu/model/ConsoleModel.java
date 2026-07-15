@@ -20,11 +20,12 @@ public class ConsoleModel {
     @OneToMany(mappedBy = "consoleModel")
     private List<Component> components;
 
-    public ConsoleModel(Long consoleModelId, String consoleModelName, Integer releaseYear, Manufacturer manufacturer) {
+    public ConsoleModel(Long consoleModelId, String consoleModelName, Integer releaseYear, Manufacturer manufacturer, List<Component> components) {
         this.consoleModelId = consoleModelId;
         this.consoleModelName = consoleModelName;
         this.releaseYear = releaseYear;
         this.manufacturer = manufacturer;
+        this.components = components;
     }
 
     public ConsoleModel() {

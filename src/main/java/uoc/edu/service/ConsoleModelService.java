@@ -9,6 +9,7 @@ import uoc.edu.exception.ResourceInUseException;
 import uoc.edu.exception.ResourceNotFoundException;
 import uoc.edu.model.ConsoleModel;
 import uoc.edu.model.Manufacturer;
+import uoc.edu.repository.ComponentRepository;
 import uoc.edu.repository.ConsoleModelRepository;
 import uoc.edu.repository.ManufacturerRepository;
 import uoc.edu.repository.ConsoleRepository;
@@ -22,11 +23,13 @@ public class ConsoleModelService {
     private final ConsoleModelRepository consoleModelRepository;
     private final ManufacturerRepository manufacturerRepository;
     private final ConsoleRepository consoleRepository;
+    private final ComponentRepository componentRepository;
 
-    public ConsoleModelService(ConsoleModelRepository consoleModelRepository, ManufacturerRepository manufacturerRepository, ConsoleRepository consoleRepository) {
+    public ConsoleModelService(ConsoleModelRepository consoleModelRepository, ManufacturerRepository manufacturerRepository, ConsoleRepository consoleRepository, ComponentRepository componentRepository) {
         this.consoleModelRepository = consoleModelRepository;
         this.manufacturerRepository = manufacturerRepository;
         this.consoleRepository = consoleRepository;
+        this.componentRepository = componentRepository;
     }
 
     public List<ConsoleModelResponseDTO> getAllConsoleModels() {
@@ -81,6 +84,11 @@ public class ConsoleModelService {
         if (consoleRepository.existsByConsoleModelConsoleModelId(id)) {
             throw new ResourceInUseException(
                     "Cannot delete a console model with associated consoles");
+        }
+        if(componentRepository.existsByConsoleModelConsoleModelId(id)){
+            throw new ResourceInUseException(
+                    "Cannot delete a console model with associated components"
+            );
         }
         consoleModelRepository.delete(consoleModel);
     }

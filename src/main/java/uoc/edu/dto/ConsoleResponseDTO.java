@@ -14,7 +14,7 @@ public record ConsoleResponseDTO(Long consoleId,
                                  String region,
                                  String color,
                                  Condition condition,
-                                 BigDecimal estimatedPrice,
+                                 BigDecimal estimatedValue,
                                  Status status,
                                  String notes
                                  ) {

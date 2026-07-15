@@ -6,5 +6,6 @@ import uoc.edu.model.Component;
 import java.util.Optional;
 
 public interface ComponentRepository extends JpaRepository<Component, Long> {
-    Optional<Component> findByName(String name);
+    Optional<Component> findByConsoleModelAndName(Long consoleModelId, String name);
+    boolean existsByConsoleModelConsoleModelId(Long consoleModelId);
 }
