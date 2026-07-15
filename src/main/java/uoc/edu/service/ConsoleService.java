@@ -4,12 +4,15 @@ import org.springframework.stereotype.Service;
 import uoc.edu.dto.ConsoleRequestDTO;
 import uoc.edu.dto.ConsoleResponseDTO;
 import uoc.edu.exception.ResourceAlreadyExistsException;
+import uoc.edu.exception.ResourceInUseException;
 import uoc.edu.exception.ResourceNotFoundException;
 import uoc.edu.model.Console;
 import uoc.edu.model.ConsoleModel;
+import uoc.edu.model.RepairStatus;
 import uoc.edu.model.User;
 import uoc.edu.repository.ConsoleModelRepository;
 import uoc.edu.repository.ConsoleRepository;
+import uoc.edu.repository.RepairCaseRepository;
 import uoc.edu.repository.UserRepository;
 
 import java.util.List;
@@ -20,11 +23,13 @@ public class ConsoleService {
     private final ConsoleRepository consoleRepository;
     private final ConsoleModelRepository consoleModelRepository;
     private final UserRepository userRepository;
+    private final RepairCaseRepository repairCaseRepository;
 
-    public ConsoleService(ConsoleRepository consoleRepository, ConsoleModelRepository consoleModelRepository, UserRepository userRepository) {
+    public ConsoleService(ConsoleRepository consoleRepository, ConsoleModelRepository consoleModelRepository, UserRepository userRepository, RepairCaseRepository repairCaseRepository) {
         this.consoleRepository = consoleRepository;
         this.consoleModelRepository = consoleModelRepository;
         this.userRepository = userRepository;
+        this.repairCaseRepository = repairCaseRepository;
     }
 
     public List<ConsoleResponseDTO> getAllConsoles() {
@@ -40,6 +45,7 @@ public class ConsoleService {
 
         return new ConsoleResponseDTO(
                 console.getConsoleId(),
+                console.getOwner().getId(),
                 console.getConsoleModel().getConsoleModelId(),
                 console.getConsoleModel().getConsoleModelName(),
                 console.getConsoleModel().getManufacturer().getManufacturerName(),
@@ -68,7 +74,7 @@ public class ConsoleService {
         console.setRegion(consoleRequestDTO.region());
         console.setColor(consoleRequestDTO.color());
         console.setCondition(consoleRequestDTO.condition());
-        console.setEstimatedValue(consoleRequestDTO.estimatedPrice());
+        console.setEstimatedValue(consoleRequestDTO.estimatedValue());
         console.setStatus(consoleRequestDTO.status());
         console.setNotes(consoleRequestDTO.notes());
 
@@ -80,18 +86,21 @@ public class ConsoleService {
     public ConsoleResponseDTO updateConsole(Long id, ConsoleRequestDTO consoleRequestDTO) {
         Console existingConsole = findConsoleEntityById(id);
         ConsoleModel consoleModel = consoleModelRepository.findById(consoleRequestDTO.consoleModelId()).orElseThrow(()-> new IllegalArgumentException("Console model not found"));
+        User owner = findUserEntityById(consoleRequestDTO.ownerId());
 
         consoleRepository. findBySerialNumber(consoleRequestDTO.serialNumber()).filter(console-> !console.getConsoleId().equals(id)).ifPresent(
                 console -> {
                     throw new ResourceAlreadyExistsException("Trying to update with invalid serialNumber " + consoleRequestDTO.serialNumber() + " belonging to console with id " + id);
                 }
         );
+
         existingConsole.setConsoleModel(consoleModel);
+        existingConsole.setOwner(owner);
         existingConsole.setSerialNumber(consoleRequestDTO.serialNumber());
         existingConsole.setRegion(consoleRequestDTO.region());
         existingConsole.setColor(consoleRequestDTO.color());
         existingConsole.setCondition(consoleRequestDTO.condition());
-        existingConsole.setEstimatedValue(consoleRequestDTO.estimatedPrice());
+        existingConsole.setEstimatedValue(consoleRequestDTO.estimatedValue());
         existingConsole.setStatus(consoleRequestDTO.status());
         existingConsole.setNotes(consoleRequestDTO.notes());
 
@@ -102,6 +111,10 @@ public class ConsoleService {
 
     public void deleteConsole(Long id) {
         Console console = findConsoleEntityById(id);
+
+        if(repairCaseRepository.existsByConsoleConsoleIdAndStatusNot(id, RepairStatus.CLOSED)){
+            throw new ResourceInUseException("Console with id " + id + " cannot be deleted because it has active repair cases");
+        }
         consoleRepository.delete(console);
     }
 

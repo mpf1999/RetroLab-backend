@@ -27,7 +27,7 @@ public record ConsoleRequestDTO (
         @NotNull(message = "Estimated price is required")
         @DecimalMin(value = "0.0", message = "Estimated price cannot be negative")
         @Digits(integer = 5, fraction = 2)
-        BigDecimal estimatedPrice,
+        BigDecimal estimatedValue,
 
         @NotNull(message = "Condition is required")
         Condition condition,

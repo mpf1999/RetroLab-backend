@@ -6,6 +6,7 @@ import uoc.edu.model.Status;
 import java.math.BigDecimal;
 
 public record ConsoleResponseDTO(Long consoleId,
+                                 Long ownerId,
                                  Long consoleModelId,
                                  String consoleModelName,
                                  String manufacturerName,

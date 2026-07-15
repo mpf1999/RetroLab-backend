@@ -3,6 +3,7 @@ package uoc.edu.model;
 import jakarta.persistence.*;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Entity
 public class Console {
@@ -34,10 +35,13 @@ public class Console {
     @Enumerated(EnumType.STRING)
     private Condition condition;
 
+    @OneToMany(mappedBy = "console")
+    private List<RepairCase> repairCases;
+
     public Console() {
     }
 
-    public Console(Long consoleId, String serialNumber, String region, String color, Status status, BigDecimal estimatedValue, String notes, ConsoleModel consoleModel, User owner, Condition condition) {
+    public Console(Long consoleId, String serialNumber, String region, String color, Status status, BigDecimal estimatedValue, String notes, ConsoleModel consoleModel, User owner, Condition condition, List<RepairCase> repairCases) {
         this.consoleId = consoleId;
         this.serialNumber = serialNumber;
         this.region = region;
@@ -48,6 +52,15 @@ public class Console {
         this.consoleModel = consoleModel;
         this.owner = owner;
         this.condition = condition;
+        this.repairCases = repairCases;
+    }
+
+    public List<RepairCase> getRepairCases() {
+        return repairCases;
+    }
+
+    public void setRepairCases(List<RepairCase> repairCases) {
+        this.repairCases = repairCases;
     }
 
     public User getOwner() {
