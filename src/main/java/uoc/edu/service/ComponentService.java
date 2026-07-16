@@ -38,7 +38,7 @@ public class ComponentService {
 
     public ComponentResponseDTO addComponent(ComponentRequestDTO componentRequestDTO) {
 
-        componentRepository.findByConsoleModelAndName(componentRequestDTO.consoleModelId(), componentRequestDTO.name())
+        componentRepository.findByConsoleModelConsoleModelIdAndName(componentRequestDTO.consoleModelId(), componentRequestDTO.name())
                 .ifPresent(component -> {
                     throw new ResourceAlreadyExistsException(
                             "A component with this name already exists");
@@ -59,7 +59,7 @@ public class ComponentService {
 
     public ComponentResponseDTO updateComponent(Long id, ComponentRequestDTO componentRequestDTO) {
 
-        componentRepository.findByConsoleModelAndName(componentRequestDTO.consoleModelId(), componentRequestDTO.name()).ifPresent(component -> {
+        componentRepository.findByConsoleModelConsoleModelIdAndName(componentRequestDTO.consoleModelId(), componentRequestDTO.name()).filter(component -> !component.getComponentId().equals(id)).ifPresent(component -> {
                     throw new ResourceAlreadyExistsException(
                             "A component with this name already exists");
                 });

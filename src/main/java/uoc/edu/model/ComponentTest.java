@@ -22,6 +22,11 @@ public class ComponentTest {
     @Column(nullable = false)
     private LocalDateTime testDate;
 
+    @PrePersist
+    public void prePersist() {
+        this.testDate = LocalDateTime.now();
+    }
+
     @ManyToOne
     @JoinColumn(name = "repair_case_id")
     private RepairCase repairCase;
