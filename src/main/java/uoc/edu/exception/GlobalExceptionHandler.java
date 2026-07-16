@@ -75,7 +75,7 @@ public class GlobalExceptionHandler {
         if (causeMessage.contains("Role")) {
             message = "Invalid role. Allowed values are USER or ADMIN.";
         } else if (causeMessage.contains("Status")) {
-            message = "Invalid status. Allowed values are AVAILABLE, IN_REPAIR, REPAIRED, RETURNED, SOLD, and ARCHIVED.";
+            message = "Invalid status. Allowed values are OPEN, IN_PROGRESS AND CLOSED.";
         } else if (causeMessage.contains("Condition")) {
             message = "Invalid condition. Allowed values are EXCELLENT, GOOD, FAIR, POOR and BROKEN.";
         }
