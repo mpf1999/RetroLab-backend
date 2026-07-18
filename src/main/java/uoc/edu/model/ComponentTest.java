@@ -16,10 +16,13 @@ public class ComponentTest {
     private BigDecimal measuredCurrent;
     private BigDecimal measuredResistance;
     private BigDecimal temperature;
+
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private TestResult result;
     private String notes;
-    @Column(nullable = false)
+
+    @Column(nullable = false, updatable = false)
     private LocalDateTime testDate;
 
     @PrePersist
@@ -28,11 +31,11 @@ public class ComponentTest {
     }
 
     @ManyToOne
-    @JoinColumn(name = "repair_case_id")
+    @JoinColumn(name = "repair_case_id", nullable = false)
     private RepairCase repairCase;
 
     @ManyToOne
-    @JoinColumn(name = "component_id")
+    @JoinColumn(name = "component_id", nullable = false)
     private Component component;
 
     public ComponentTest(Long componentTestId, BigDecimal measuredVoltage, BigDecimal measuredCurrent, BigDecimal measuredResistance, BigDecimal temperature, RepairCase repairCase, Component component) {

@@ -31,7 +31,7 @@ public class RepairCaseController {
         return repairCaseService.getRepairCaseById(id);
     }
 
-    @GetMapping("console/{consoleId}")
+    @GetMapping("consoles/{consoleId}")
     public List<RepairCaseResponseDTO> getRepairCasesByConsoleId(@PathVariable Long consoleId) {
         return repairCaseService.getRepairCasesByConsoleId(consoleId);
     }
