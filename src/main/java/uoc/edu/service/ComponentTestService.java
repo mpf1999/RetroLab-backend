@@ -3,6 +3,7 @@ package uoc.edu.service;
 import org.springframework.stereotype.Service;
 import uoc.edu.dto.ComponentTestRequestDTO;
 import uoc.edu.dto.ComponentTestResponseDTO;
+import uoc.edu.exception.InvalidRequestException;
 import uoc.edu.exception.ResourceNotFoundException;
 import uoc.edu.model.Component;
 import uoc.edu.model.ComponentTest;
@@ -60,6 +61,8 @@ public class ComponentTestService {
         RepairCase repairCase = findRepairCaseEntityById(componentTestRequestDTO.repairCaseId());
         Component component = findComponentEntityById(componentTestRequestDTO.componentId());
 
+        validateComponentBelongsToRepairCaseModel(repairCase, component);
+
         ComponentTest componentTest = new ComponentTest();
 
         componentTest.setRepairCase(repairCase);
@@ -81,6 +84,8 @@ public class ComponentTestService {
 
         RepairCase repairCase = findRepairCaseEntityById(componentTestRequestDTO.repairCaseId());
         Component component = findComponentEntityById(componentTestRequestDTO.componentId());
+
+        validateComponentBelongsToRepairCaseModel(repairCase, component);
 
         componentTest.setRepairCase(repairCase);
         componentTest.setComponent(component);
@@ -114,5 +119,24 @@ public class ComponentTestService {
     }
     private RepairCase findRepairCaseEntityById(Long repairCaseId) {
         return repairCaseRepository.findById(repairCaseId).orElseThrow(() -> new ResourceNotFoundException("RepairCase not found"));
+    }
+    private void validateComponentBelongsToRepairCaseModel(
+            RepairCase repairCase,
+            Component component
+    ) {
+        Long repairCaseModelId = repairCase
+                .getConsole()
+                .getConsoleModel()
+                .getConsoleModelId();
+
+        Long componentModelId = component
+                .getConsoleModel()
+                .getConsoleModelId();
+
+        if (!repairCaseModelId.equals(componentModelId)) {
+            throw new InvalidRequestException(
+                    "The component does not belong to the console model associated with the repair case"
+            );
+        }
     }
 }
