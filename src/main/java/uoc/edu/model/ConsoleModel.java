@@ -8,7 +8,7 @@ public class ConsoleModel {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long consoleModelId;
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true)
     private String consoleModelName;
     @Column(nullable = false)
     private Integer releaseYear;
