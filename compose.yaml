@@ -1,9 +1,16 @@
 services:
   postgres:
-    image: 'postgres:latest'
+    container_name: postgres-backend-api
+    image: postgres:17
     environment:
-      - 'POSTGRES_DB=spring_test'
-      - 'POSTGRES_PASSWORD=5001'
-      - 'POSTGRES_USER=mperezferia'
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
     ports:
-      - '5432'
+      - "5332:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  postgres-data:

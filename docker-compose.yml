@@ -1,10 +1,11 @@
 services:
   db:
-    container_name: postgres-spring-test
+    container_name: postgres-backend-api
     image: postgres:latest
     environment:
-      POSTGRES_USER: amigoscode
-      POSTGRES_PASSWORD: password
+      POSTGRES_DB: backend_api
+      POSTGRES_USER: backend_api
+      POSTGRES_PASSWORD: 5001
       PGDATA: /data/postgres
     volumes:
       - db:/data/postgres

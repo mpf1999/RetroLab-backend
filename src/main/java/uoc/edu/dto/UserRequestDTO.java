@@ -21,4 +21,5 @@ public record UserRequestDTO(
                 regexp = "^(?=.*[A-Z])(?=.*\\d).*$",
                 message = "Password must contain at least one uppercase letter and one number"
         )
-        String passwordHash, Role role){}
+        String password,
+        Role role){}
