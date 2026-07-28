@@ -41,6 +41,16 @@ public class User {
         this.createdAt = createdAt;
     }
 
+    @PrePersist
+    public void prePersist() {
+        if (createdAt == null) {
+            createdAt = LocalDateTime.now();
+        }
+        if (role == null) {
+            role = Role.USER;
+        }
+    }
+
     public Long getId() {
         return id;
     }

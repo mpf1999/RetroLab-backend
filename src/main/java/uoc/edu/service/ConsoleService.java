@@ -85,7 +85,7 @@ public class ConsoleService {
 
     public ConsoleResponseDTO updateConsole(Long id, ConsoleRequestDTO consoleRequestDTO) {
         Console existingConsole = findConsoleEntityById(id);
-        ConsoleModel consoleModel = consoleModelRepository.findById(consoleRequestDTO.consoleModelId()).orElseThrow(()-> new IllegalArgumentException("Console model not found"));
+        ConsoleModel consoleModel = findConsoleModelEntityById(consoleRequestDTO.consoleModelId());
         User owner = findUserEntityById(consoleRequestDTO.ownerId());
 
         consoleRepository. findBySerialNumber(consoleRequestDTO.serialNumber()).filter(console-> !console.getConsoleId().equals(id)).ifPresent(
