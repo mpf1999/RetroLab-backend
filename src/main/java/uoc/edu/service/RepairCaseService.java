@@ -71,22 +71,45 @@ public class RepairCaseService {
 
 
 
-    public RepairCaseResponseDTO updateRepairCase(Long id, RepairCaseRequestDTO repairCaseRequestDTO) {
-        RepairCase existingRepairCase = findRepairEntityCaseById(id);
+    public RepairCaseResponseDTO updateRepairCase(
+            Long id,
+            RepairCaseRequestDTO repairCaseRequestDTO
+    ) {
+        RepairCase existingRepairCase =
+                findRepairEntityCaseById(id);
 
         if (existingRepairCase.getStatus() == RepairStatus.CLOSED) {
-            throw new InvalidRequestException("Closed repair cases cannot be modified");
+            throw new InvalidRequestException(
+                    "Closed repair cases cannot be modified"
+            );
+        }
+        Console console = existingRepairCase.getConsole();
+
+        if (repairCaseRequestDTO.consoleId() != null) {
+            console = findConsoleEntityCaseById(
+                    repairCaseRequestDTO.consoleId()
+            );
         }
 
-        existingRepairCase.setTitle(repairCaseRequestDTO.title());
-        existingRepairCase.setDescription(repairCaseRequestDTO.description());
-        existingRepairCase.setStatus(repairCaseRequestDTO.status());
-        if (repairCaseRequestDTO.consoleId() != null) {
-            existingRepairCase.setConsole(findConsoleEntityCaseById(repairCaseRequestDTO.consoleId()));
-        }
+        /*
+         * Una vez superadas las validaciones,
+         * se modifica la entidad.
+         */
+        existingRepairCase.setConsole(console);
+        existingRepairCase.setTitle(
+                repairCaseRequestDTO.title()
+        );
+        existingRepairCase.setDescription(
+                repairCaseRequestDTO.description()
+        );
+        existingRepairCase.setStatus(
+                repairCaseRequestDTO.status()
+        );
 
         if (repairCaseRequestDTO.status() == RepairStatus.CLOSED) {
-            existingRepairCase.setEndDate(LocalDateTime.now());
+            existingRepairCase.setEndDate(
+                    LocalDateTime.now()
+            );
         }
 
         validateRepairDates(
@@ -94,7 +117,9 @@ public class RepairCaseService {
                 existingRepairCase.getEndDate()
         );
 
-        RepairCase savedRepairCase = repairCaseRepository.save(existingRepairCase);
+        RepairCase savedRepairCase =
+                repairCaseRepository.save(existingRepairCase);
+
         return mapToResponseDTO(savedRepairCase);
     }
 
@@ -108,7 +133,7 @@ public class RepairCaseService {
         repairCaseRepository.delete(repairCase);
     }
     public RepairCase findRepairEntityCaseById(Long id) {
-        return repairCaseRepository.findById(id).orElseThrow(()-> new ResourceNotFoundException("RepairCase not found"));
+        return repairCaseRepository.findById(id).orElseThrow(()-> new ResourceNotFoundException("Repair case not found"));
     }
     private Console findConsoleEntityCaseById(Long id) {
         return consoleRepository.findById(id).orElseThrow(()-> new ResourceNotFoundException("Console not found"));
