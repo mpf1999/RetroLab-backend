@@ -52,7 +52,6 @@ class UserIntegrationTest {
     void setUp() throws Exception {
 
         login();
-
         admin = userRepository.findByEmailIgnoreCase("admin@retrolab.com").orElseThrow();
         technician = createUser("Test Technician", "technician@test.com", "Password123!", Role.USER);
     }
@@ -66,11 +65,7 @@ class UserIntegrationTest {
                 }
                 """;
 
-        MvcResult result = mockMvc.perform(post(LOGIN_URL).contentType(MediaType.APPLICATION_JSON).content(loginRequest))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.token").isString())
-                .andReturn();
-
+        MvcResult result = mockMvc.perform(post(LOGIN_URL).contentType(MediaType.APPLICATION_JSON).content(loginRequest)).andExpect(status().isOk()).andExpect(jsonPath("$.token").isString()).andReturn();
         jwt = JsonPath.read(result.getResponse().getContentAsString(), "$.token");
     }
 
@@ -81,11 +76,7 @@ class UserIntegrationTest {
     @Test
     void getAllUsersReturnsUsers() throws Exception {
 
-        mockMvc.perform(
-                        get(BASE_URL)
-                                .with(authenticated())
-                                .accept(MediaType.APPLICATION_JSON)
-                )
+        mockMvc.perform(get(BASE_URL).with(authenticated()).accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray())
                 .andExpect(jsonPath("$", hasSize(2)))
@@ -105,29 +96,19 @@ class UserIntegrationTest {
     }
 
     @Test
-    void getUserByIdReturnsNotFoundWhenUserDoesNotExist()
-            throws Exception {
+    void getUserByIdReturnsNotFoundWhenUserDoesNotExist() throws Exception {
 
         mockMvc.perform(get(BASE_URL + "/{id}", 999999L).with(authenticated()).accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.status")
-                        .value(404))
-                .andExpect(jsonPath("$.error")
-                        .value("Not Found"))
-                .andExpect(jsonPath("$.message")
-                        .value("User not found"))
-                .andExpect(jsonPath("$.path")
-                        .value(BASE_URL + "/999999"));
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.error").value("Not Found"))
+                .andExpect(jsonPath("$.message").value("User not found"))
+                .andExpect(jsonPath("$.path").value(BASE_URL + "/999999"));
     }
 
     @Test
     void addUserSavesUserAndEncryptsPassword() throws Exception {
-        UserRequestDTO request = new UserRequestDTO(
-                "New User",
-                "created@test.com",
-                "Contraseñita123!",
-                Role.USER
-        );
+        UserRequestDTO request = new UserRequestDTO("New User", "created@test.com", "Contraseñita123!", Role.USER);
 
         MvcResult result = mockMvc.perform(post(BASE_URL).with(authenticated())
                         .contentType(MediaType.APPLICATION_JSON)
@@ -137,12 +118,9 @@ class UserIntegrationTest {
                 )
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.userId").isNumber())
-                .andExpect(jsonPath("$.email")
-                        .value("created@test.com"))
-                .andExpect(jsonPath("$.role")
-                        .value("USER"))
-                .andExpect(jsonPath("$.passwordHash")
-                        .doesNotExist())
+                .andExpect(jsonPath("$.email").value("created@test.com"))
+                .andExpect(jsonPath("$.role").value("USER"))
+                .andExpect(jsonPath("$.passwordHash").doesNotExist())
                 .andReturn();
 
         Number userId = JsonPath.read(result.getResponse().getContentAsString(), "$.userId");
@@ -152,31 +130,21 @@ class UserIntegrationTest {
                 () -> assertEquals("New User", savedUser.getName()),
                 () -> assertEquals("created@test.com", savedUser.getEmail()),
                 () -> assertEquals(Role.USER, savedUser.getRole()),
-                () -> assertNotEquals("SecurePassword123!", savedUser.getPasswordHash()
-                ),
+                () -> assertNotEquals("SecurePassword123!", savedUser.getPasswordHash()),
                 () -> assertTrue(passwordEncoder.matches("Contraseñita123!", savedUser.getPasswordHash()))
         );
     }
 
     @Test
-    void addUserReturnsConflictWhenEmailAlreadyExists()
-            throws Exception {
+    void addUserReturnsConflictWhenEmailAlreadyExists() throws Exception {
 
-        UserRequestDTO request = new UserRequestDTO(
-                "Duplicate User",
-                "technician@test.com",
-                "Password123!",
-                Role.USER
-        );
+        UserRequestDTO request = new UserRequestDTO("Duplicate User", "technician@test.com", "Password123!", Role.USER);
         mockMvc.perform(post(BASE_URL).with(authenticated()).contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.status").value(409))
                 .andExpect(jsonPath("$.error").value("Conflict"));
 
-        assertEquals(
-                1,
-                userRepository.findAll().stream().filter(user -> user.getEmail().equalsIgnoreCase("technician@test.com")).count()
-        );
+        assertEquals(1, userRepository.findAll().stream().filter(user -> user.getEmail().equalsIgnoreCase("technician@test.com")).count());
     }
 
     @Test
@@ -192,19 +160,14 @@ class UserIntegrationTest {
                 Role.USER
         );
 
-        mockMvc.perform(put(BASE_URL + "/{id}", userId).with(authenticated())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request))
-                )
+        mockMvc.perform(put(BASE_URL + "/{id}", userId).with(authenticated()).contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.userId").value(userId))
                 .andExpect(jsonPath("$.email").value("updated@test.com"))
                 .andExpect(jsonPath("$.role").value("USER"))
                 .andExpect(jsonPath("$.passwordHash").doesNotExist());
 
-        User updatedUser = userRepository.findById(
-                userId
-        ).orElseThrow();
+        User updatedUser = userRepository.findById(userId).orElseThrow();
 
         assertAll(
                 () -> assertEquals("Updated Technician", updatedUser.getName()),
@@ -216,12 +179,7 @@ class UserIntegrationTest {
 
     @Test
     void updateUserReturnsNotFoundWhenUserDoesNotExist() throws Exception {
-        UserRequestDTO request = new UserRequestDTO(
-                "Missing User",
-                "missing@test.com",
-                "Password123!",
-                Role.USER
-        );
+        UserRequestDTO request = new UserRequestDTO("Missing User", "missing@test.com", "Password123!", Role.USER);
         mockMvc.perform(put(BASE_URL + "/{id}", 999999L)
                         .with(authenticated())
                         .contentType(MediaType.APPLICATION_JSON)

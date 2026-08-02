@@ -190,7 +190,7 @@ class RepairCaseServiceTest {
 
         ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class, () -> repairCaseService.getRepairCaseById(99L));
 
-        assertEquals("RepairCase not found", exception.getMessage());
+        assertEquals("Repair case not found", exception.getMessage());
 
         verify(repairCaseRepository).findById(99L);
         verifyNoMoreInteractions(repairCaseRepository);
@@ -514,7 +514,7 @@ class RepairCaseServiceTest {
 
         ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class, () -> repairCaseService.updateRepairCase(99L, request));
 
-        assertEquals("RepairCase not found", exception.getMessage());
+        assertEquals("Repair case not found", exception.getMessage());
 
         verify(repairCaseRepository).findById(99L);
         verify(repairCaseRepository, never()).save(any(RepairCase.class));
@@ -628,7 +628,7 @@ class RepairCaseServiceTest {
 
         ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class, () -> repairCaseService.deleteRepairCase(99L));
 
-        assertEquals("RepairCase not found", exception.getMessage());
+        assertEquals("Repair case not found", exception.getMessage());
 
         verify(repairCaseRepository).findById(99L);
         verify(repairCaseRepository, never()).delete(any(RepairCase.class));
@@ -660,7 +660,7 @@ class RepairCaseServiceTest {
 
         ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class, () -> repairCaseService.findRepairEntityCaseById(99L));
 
-        assertEquals("RepairCase not found", exception.getMessage());
+        assertEquals("Repair case not found", exception.getMessage());
 
         verify(repairCaseRepository).findById(99L);
         verifyNoMoreInteractions(repairCaseRepository);

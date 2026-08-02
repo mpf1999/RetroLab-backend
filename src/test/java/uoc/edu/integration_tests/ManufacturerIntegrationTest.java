@@ -222,10 +222,7 @@ class ManufacturerIntegrationTest {
 
         ManufacturerRequestDTO request = new ManufacturerRequestDTO("Sony", "JP");
 
-        mockMvc.perform(put(BASE_URL + "/{id}", nintendo.getManufacturerId())
-                                .with(authenticated())
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(objectMapper.writeValueAsString(request))
+        mockMvc.perform(put(BASE_URL + "/{id}", nintendo.getManufacturerId()).with(authenticated()).contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(request))
                 )
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.status").value(409))
@@ -275,16 +272,13 @@ class ManufacturerIntegrationTest {
     void deleteManufacturerReturnsConflictWhenManufacturerHasConsoleModels() throws Exception {
         ConsoleModel consoleModel = createConsoleModel("Game Boy", 1989, nintendo);
         consoleModelRepository.save(consoleModel);
-        mockMvc.perform(
-                        delete(BASE_URL + "/{id}", nintendo.getManufacturerId()).with(authenticated())
-                )
+        mockMvc.perform(delete(BASE_URL + "/{id}", nintendo.getManufacturerId()).with(authenticated()))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.status").value(409))
                 .andExpect(jsonPath("$.error").value("Conflict"))
                 .andExpect(jsonPath("$.message").value("Cannot delete a manufacturer with " + "associated console models"))
                 .andExpect(jsonPath("$.path").value(BASE_URL + "/" + nintendo.getManufacturerId()));
-        assertTrue(
-                manufacturerRepository.existsById(nintendo.getManufacturerId()));
+        assertTrue(manufacturerRepository.existsById(nintendo.getManufacturerId()));
     }
 
     // helper

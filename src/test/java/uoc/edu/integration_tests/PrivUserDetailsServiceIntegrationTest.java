@@ -39,9 +39,7 @@ class PrivUserDetailsServiceIntegrationTest {
         technician = new User();
         technician.setName("Ataulfo");
         technician.setEmail("ataulfo-test@test.com");
-        technician.setPasswordHash(
-                passwordEncoder.encode("Password123!")
-        );
+        technician.setPasswordHash(passwordEncoder.encode("Password123!"));
         technician.setRole(Role.USER);
 
         technician = userRepository.save(technician);
@@ -81,14 +79,7 @@ class PrivUserDetailsServiceIntegrationTest {
 
         userRepository.save(admin);
         UserDetails userDetails = privUserDetailsService.loadUserByUsername("security-admin@test.com");
-
-        assertTrue(
-                userDetails.getAuthorities().contains(
-                        new SimpleGrantedAuthority(
-                                "ROLE_ADMIN"
-                        )
-                )
-        );
+        assertTrue(userDetails.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_ADMIN")));
     }
 
     @Test
