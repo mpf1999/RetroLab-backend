@@ -66,52 +66,167 @@ class RepairCaseServiceTest {
     @BeforeEach
     void setUp() {
 
-        firstStartDate = LocalDateTime.of(2026, 7, 20, 10, 30);
+        firstStartDate =
+                LocalDateTime.of(
+                        2026,
+                        7,
+                        20,
+                        10,
+                        30
+                );
 
-        secondStartDate = LocalDateTime.of(2026, 7, 21, 12, 15);
+        secondStartDate =
+                LocalDateTime.of(
+                        2026,
+                        7,
+                        21,
+                        12,
+                        15
+                );
 
-        closedStartDate = LocalDateTime.of(2026, 7, 10, 9, 0);
+        closedStartDate =
+                LocalDateTime.of(
+                        2026,
+                        7,
+                        10,
+                        9,
+                        0
+                );
 
-        closedEndDate = LocalDateTime.of(2026, 7, 15, 17, 30);
+        closedEndDate =
+                LocalDateTime.of(
+                        2026,
+                        7,
+                        15,
+                        17,
+                        30
+                );
 
-        nintendo = createManufacturer(1L, "Nintendo", "JP");
-        sony = createManufacturer(2L, "Sony", "JP");
-        gameBoyModel = createConsoleModel(1L, "Game Boy", 1989, nintendo);
-        playStationModel = createConsoleModel(2L, "PlayStation", 1994, sony);
-        gameBoy = createConsole(1L, gameBoyModel, "GB-123456");
-        playStation = createConsole(2L, playStationModel, "PS-987654");
+        nintendo =
+                createManufacturer(
+                        1L,
+                        "Nintendo",
+                        "JP"
+                );
 
-        openRepairCase = createRepairCase(1L, gameBoy, "Screen does not display an image", "The console powers on, but the screen remains blank", RepairStatus.OPEN, firstStartDate, null);
+        sony =
+                createManufacturer(
+                        2L,
+                        "Sony",
+                        "JP"
+                );
 
-        inProgressRepairCase = createRepairCase(2L, gameBoy, "No audio output", "The internal speaker does not produce sound", RepairStatus.IN_PROGRESS, secondStartDate, null);
+        gameBoyModel =
+                createConsoleModel(
+                        1L,
+                        "Game Boy",
+                        1989,
+                        nintendo
+                );
 
-        closedRepairCase = createRepairCase(3L, playStation, "Disc read failure", "The console was unable to read game discs", RepairStatus.CLOSED, closedStartDate, closedEndDate);
+        playStationModel =
+                createConsoleModel(
+                        2L,
+                        "PlayStation",
+                        1994,
+                        sony
+                );
+
+        gameBoy =
+                createConsole(
+                        1L,
+                        gameBoyModel,
+                        "GB-123456"
+                );
+
+        playStation =
+                createConsole(
+                        2L,
+                        playStationModel,
+                        "PS-987654"
+                );
+
+        openRepairCase =
+                createRepairCase(
+                        1L,
+                        gameBoy,
+                        "Screen does not display an image",
+                        "The console powers on, but the screen remains blank",
+                        RepairStatus.OPEN,
+                        firstStartDate,
+                        null
+                );
+
+        inProgressRepairCase =
+                createRepairCase(
+                        2L,
+                        gameBoy,
+                        "No audio output",
+                        "The internal speaker does not produce sound",
+                        RepairStatus.IN_PROGRESS,
+                        secondStartDate,
+                        null
+                );
+
+        closedRepairCase =
+                createRepairCase(
+                        3L,
+                        playStation,
+                        "Disc read failure",
+                        "The console was unable to read game discs",
+                        RepairStatus.CLOSED,
+                        closedStartDate,
+                        closedEndDate
+                );
     }
-
-    // get all repair cases test
 
     @Test
     void getAllRepairCasesReturnsRepairCases() {
 
-        when(repairCaseRepository.findAll()).thenReturn(List.of(openRepairCase, inProgressRepairCase, closedRepairCase));
+        when(repairCaseRepository.findAll())
+                .thenReturn(
+                        List.of(
+                                openRepairCase,
+                                inProgressRepairCase,
+                                closedRepairCase
+                        )
+                );
 
-        List<RepairCaseResponseDTO> result = repairCaseService.getAllRepairCases();
+        List<RepairCaseResponseDTO> result =
+                repairCaseService.getAllRepairCases();
 
         assertNotNull(result);
         assertEquals(3, result.size());
 
-        RepairCaseResponseDTO firstResult = result.getFirst();
-        RepairCaseResponseDTO secondResult = result.get(1);
-        RepairCaseResponseDTO thirdResult = result.get(2);
+        RepairCaseResponseDTO firstResult =
+                result.getFirst();
+
+        RepairCaseResponseDTO secondResult =
+                result.get(1);
+
+        RepairCaseResponseDTO thirdResult =
+                result.get(2);
 
         assertAll(
                 () -> assertEquals(1L, firstResult.repairCaseId()),
                 () -> assertEquals(1L, firstResult.consoleId()),
                 () -> assertEquals("Game Boy", firstResult.consoleName()),
-                () -> assertEquals("Screen does not display an image", firstResult.title()),
-                () -> assertEquals("The console powers on, but the screen remains blank", firstResult.description()),
-                () -> assertEquals(RepairStatus.OPEN, firstResult.status()),
-                () -> assertEquals(firstStartDate, firstResult.startDate()),
+                () -> assertEquals(
+                        "Screen does not display an image",
+                        firstResult.title()
+                ),
+                () -> assertEquals(
+                        "The console powers on, but the screen remains blank",
+                        firstResult.description()
+                ),
+                () -> assertEquals(
+                        RepairStatus.OPEN,
+                        firstResult.status()
+                ),
+                () -> assertEquals(
+                        firstStartDate,
+                        firstResult.startDate()
+                ),
                 () -> assertNull(firstResult.endDate())
         );
 
@@ -119,169 +234,355 @@ class RepairCaseServiceTest {
                 () -> assertEquals(2L, secondResult.repairCaseId()),
                 () -> assertEquals(1L, secondResult.consoleId()),
                 () -> assertEquals("Game Boy", secondResult.consoleName()),
-                () -> assertEquals("No audio output", secondResult.title()),
-                () -> assertEquals("The internal speaker does not produce sound", secondResult.description()),
-                () -> assertEquals(RepairStatus.IN_PROGRESS, secondResult.status()),
-                () -> assertEquals(secondStartDate, secondResult.startDate()),
+                () -> assertEquals(
+                        "No audio output",
+                        secondResult.title()
+                ),
+                () -> assertEquals(
+                        "The internal speaker does not produce sound",
+                        secondResult.description()
+                ),
+                () -> assertEquals(
+                        RepairStatus.IN_PROGRESS,
+                        secondResult.status()
+                ),
+                () -> assertEquals(
+                        secondStartDate,
+                        secondResult.startDate()
+                ),
                 () -> assertNull(secondResult.endDate())
         );
 
         assertAll(
                 () -> assertEquals(3L, thirdResult.repairCaseId()),
                 () -> assertEquals(2L, thirdResult.consoleId()),
-                () -> assertEquals("PlayStation", thirdResult.consoleName()),
-                () -> assertEquals("Disc read failure", thirdResult.title()),
-                () -> assertEquals("The console was unable to read game discs", thirdResult.description()),
-                () -> assertEquals(RepairStatus.CLOSED, thirdResult.status()),
-                () -> assertEquals(closedStartDate, thirdResult.startDate()),
-                () -> assertEquals(closedEndDate, thirdResult.endDate())
+                () -> assertEquals(
+                        "PlayStation",
+                        thirdResult.consoleName()
+                ),
+                () -> assertEquals(
+                        "Disc read failure",
+                        thirdResult.title()
+                ),
+                () -> assertEquals(
+                        "The console was unable to read game discs",
+                        thirdResult.description()
+                ),
+                () -> assertEquals(
+                        RepairStatus.CLOSED,
+                        thirdResult.status()
+                ),
+                () -> assertEquals(
+                        closedStartDate,
+                        thirdResult.startDate()
+                ),
+                () -> assertEquals(
+                        closedEndDate,
+                        thirdResult.endDate()
+                )
         );
 
         verify(repairCaseRepository).findAll();
         verifyNoMoreInteractions(repairCaseRepository);
-        verifyNoInteractions(consoleRepository, componentTestRepository);
+        verifyNoInteractions(
+                consoleRepository,
+                componentTestRepository
+        );
     }
 
     @Test
     void getAllRepairCasesReturnsEmptyList() {
 
-        when(repairCaseRepository.findAll()).thenReturn(List.of());
+        when(repairCaseRepository.findAll())
+                .thenReturn(List.of());
 
-        List<RepairCaseResponseDTO> result = repairCaseService.getAllRepairCases();
+        List<RepairCaseResponseDTO> result =
+                repairCaseService.getAllRepairCases();
 
         assertNotNull(result);
         assertTrue(result.isEmpty());
 
         verify(repairCaseRepository).findAll();
         verifyNoMoreInteractions(repairCaseRepository);
-        verifyNoInteractions(consoleRepository, componentTestRepository);
+        verifyNoInteractions(
+                consoleRepository,
+                componentTestRepository
+        );
     }
-
-    // get repair cases by id test
 
     @Test
     void getRepairCaseByIdReturnsRepairCase() {
 
-        when(repairCaseRepository.findById(1L)).thenReturn(Optional.of(openRepairCase));
+        when(repairCaseRepository.findById(1L))
+                .thenReturn(Optional.of(openRepairCase));
 
-        RepairCaseResponseDTO result = repairCaseService.getRepairCaseById(1L);
+        RepairCaseResponseDTO result =
+                repairCaseService.getRepairCaseById(1L);
 
         assertNotNull(result);
+
         assertAll(
                 () -> assertEquals(1L, result.repairCaseId()),
                 () -> assertEquals(1L, result.consoleId()),
                 () -> assertEquals("Game Boy", result.consoleName()),
-                () -> assertEquals("Screen does not display an image", result.title()),
-                () -> assertEquals("The console powers on, but the screen remains blank", result.description()),
-                () -> assertEquals(RepairStatus.OPEN, result.status()),
-                () -> assertEquals(firstStartDate, result.startDate()),
+                () -> assertEquals(
+                        "Screen does not display an image",
+                        result.title()
+                ),
+                () -> assertEquals(
+                        "The console powers on, but the screen remains blank",
+                        result.description()
+                ),
+                () -> assertEquals(
+                        RepairStatus.OPEN,
+                        result.status()
+                ),
+                () -> assertEquals(
+                        firstStartDate,
+                        result.startDate()
+                ),
                 () -> assertNull(result.endDate())
         );
 
         verify(repairCaseRepository).findById(1L);
         verifyNoMoreInteractions(repairCaseRepository);
-        verifyNoInteractions(consoleRepository, componentTestRepository);
+        verifyNoInteractions(
+                consoleRepository,
+                componentTestRepository
+        );
     }
 
     @Test
     void getRepairCaseByIdThrowsExceptionWhenRepairCaseDoesNotExist() {
 
-        when(repairCaseRepository.findById(99L)).thenReturn(Optional.empty());
+        when(repairCaseRepository.findById(99L))
+                .thenReturn(Optional.empty());
 
-        ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class, () -> repairCaseService.getRepairCaseById(99L));
+        ResourceNotFoundException exception =
+                assertThrows(
+                        ResourceNotFoundException.class,
+                        () ->
+                                repairCaseService
+                                        .getRepairCaseById(99L)
+                );
 
-        assertEquals("Repair case not found", exception.getMessage());
+        assertEquals(
+                "Repair case not found",
+                exception.getMessage()
+        );
 
         verify(repairCaseRepository).findById(99L);
         verifyNoMoreInteractions(repairCaseRepository);
-        verifyNoInteractions(consoleRepository, componentTestRepository);
+        verifyNoInteractions(
+                consoleRepository,
+                componentTestRepository
+        );
     }
-
-    // get repair cases by console id test
 
     @Test
     void getRepairCasesByConsoleIdReturnsRepairCases() {
 
-        when(repairCaseRepository.findByConsoleConsoleId(1L)).thenReturn(List.of(openRepairCase, inProgressRepairCase));
+        when(
+                repairCaseRepository
+                        .findByConsoleConsoleId(1L)
+        ).thenReturn(
+                List.of(
+                        openRepairCase,
+                        inProgressRepairCase
+                )
+        );
 
-        List<RepairCaseResponseDTO> result = repairCaseService.getRepairCasesByConsoleId(1L);
+        List<RepairCaseResponseDTO> result =
+                repairCaseService
+                        .getRepairCasesByConsoleId(1L);
 
         assertNotNull(result);
         assertEquals(2, result.size());
 
-        RepairCaseResponseDTO firstResult = result.getFirst();
-        RepairCaseResponseDTO secondResult = result.get(1);
+        RepairCaseResponseDTO firstResult =
+                result.getFirst();
+
+        RepairCaseResponseDTO secondResult =
+                result.get(1);
 
         assertAll(
-                () -> assertEquals(1L, firstResult.repairCaseId()),
-                () -> assertEquals(1L, firstResult.consoleId()),
-                () -> assertEquals("Game Boy", firstResult.consoleName()),
-                () -> assertEquals("Screen does not display an image", firstResult.title()),
-                () -> assertEquals(RepairStatus.OPEN, firstResult.status()),
-                () -> assertEquals(firstStartDate, firstResult.startDate()),
+                () -> assertEquals(
+                        1L,
+                        firstResult.repairCaseId()
+                ),
+                () -> assertEquals(
+                        1L,
+                        firstResult.consoleId()
+                ),
+                () -> assertEquals(
+                        "Game Boy",
+                        firstResult.consoleName()
+                ),
+                () -> assertEquals(
+                        "Screen does not display an image",
+                        firstResult.title()
+                ),
+                () -> assertEquals(
+                        RepairStatus.OPEN,
+                        firstResult.status()
+                ),
+                () -> assertEquals(
+                        firstStartDate,
+                        firstResult.startDate()
+                ),
                 () -> assertNull(firstResult.endDate())
         );
 
         assertAll(
-                () -> assertEquals(2L, secondResult.repairCaseId()),
-                () -> assertEquals(1L, secondResult.consoleId()),
-                () -> assertEquals("Game Boy", secondResult.consoleName()),
-                () -> assertEquals("No audio output", secondResult.title()),
-                () -> assertEquals(RepairStatus.IN_PROGRESS, secondResult.status()),
-                () -> assertEquals(secondStartDate, secondResult.startDate()),
+                () -> assertEquals(
+                        2L,
+                        secondResult.repairCaseId()
+                ),
+                () -> assertEquals(
+                        1L,
+                        secondResult.consoleId()
+                ),
+                () -> assertEquals(
+                        "Game Boy",
+                        secondResult.consoleName()
+                ),
+                () -> assertEquals(
+                        "No audio output",
+                        secondResult.title()
+                ),
+                () -> assertEquals(
+                        RepairStatus.IN_PROGRESS,
+                        secondResult.status()
+                ),
+                () -> assertEquals(
+                        secondStartDate,
+                        secondResult.startDate()
+                ),
                 () -> assertNull(secondResult.endDate())
         );
 
-        verify(repairCaseRepository).findByConsoleConsoleId(1L);
+        verify(repairCaseRepository)
+                .findByConsoleConsoleId(1L);
+
         verifyNoMoreInteractions(repairCaseRepository);
-        verifyNoInteractions(consoleRepository, componentTestRepository);
+        verifyNoInteractions(
+                consoleRepository,
+                componentTestRepository
+        );
     }
 
     @Test
     void getRepairCasesByConsoleIdReturnsEmptyList() {
 
-        when(repairCaseRepository.findByConsoleConsoleId(99L)).thenReturn(List.of());
-        List<RepairCaseResponseDTO> result = repairCaseService.getRepairCasesByConsoleId(99L);
+        when(
+                repairCaseRepository
+                        .findByConsoleConsoleId(99L)
+        ).thenReturn(List.of());
+
+        List<RepairCaseResponseDTO> result =
+                repairCaseService
+                        .getRepairCasesByConsoleId(99L);
 
         assertNotNull(result);
         assertTrue(result.isEmpty());
 
-        verify(repairCaseRepository).findByConsoleConsoleId(99L);
-        verifyNoMoreInteractions(repairCaseRepository);
-        verifyNoInteractions(consoleRepository, componentTestRepository);
-    }
+        verify(repairCaseRepository)
+                .findByConsoleConsoleId(99L);
 
-    // add repair case test
+        verifyNoMoreInteractions(repairCaseRepository);
+        verifyNoInteractions(
+                consoleRepository,
+                componentTestRepository
+        );
+    }
 
     @Test
     void addRepairCaseReturnsCreatedRepairCase() {
 
-        RepairCaseRequestDTO request = new RepairCaseRequestDTO(1L, "Console does not power on", "The power LED does not illuminate", RepairStatus.OPEN);
+        RepairCaseRequestDTO request =
+                new RepairCaseRequestDTO(
+                        1L,
+                        "Console does not power on",
+                        "The power LED does not illuminate",
+                        RepairStatus.OPEN
+                );
 
-        when(consoleRepository.findById(1L)).thenReturn(Optional.of(gameBoy));
-        when(repairCaseRepository.save(any(RepairCase.class))).thenAnswer(invocation -> {RepairCase repairCase = invocation.getArgument(0);repairCase.setRepairCaseId(4L);return repairCase;});
+        when(consoleRepository.findById(1L))
+                .thenReturn(Optional.of(gameBoy));
 
-        LocalDateTime beforeExecution = LocalDateTime.now();
-        RepairCaseResponseDTO result = repairCaseService.addRepairCase(request);
+        when(
+                repairCaseRepository
+                        .save(any(RepairCase.class))
+        ).thenAnswer(
+                invocation -> {
+                    RepairCase repairCase =
+                            invocation.getArgument(0);
 
-        LocalDateTime afterExecution = LocalDateTime.now();
+                    repairCase.setRepairCaseId(4L);
+                    repairCase.setStartDate(
+                            LocalDateTime.now()
+                    );
+
+                    return repairCase;
+                }
+        );
+
+        LocalDateTime beforeExecution =
+                LocalDateTime.now();
+
+        RepairCaseResponseDTO result =
+                repairCaseService
+                        .addRepairCase(request);
+
+        LocalDateTime afterExecution =
+                LocalDateTime.now();
 
         assertNotNull(result);
+
         assertAll(
-                () -> assertEquals(4L, result.repairCaseId()),
-                () -> assertEquals(1L, result.consoleId()),
-                () -> assertEquals("Game Boy", result.consoleName()),
-                () -> assertEquals("Console does not power on", result.title()),
-                () -> assertEquals("The power LED does not illuminate", result.description()),
-                () -> assertEquals(RepairStatus.OPEN, result.status()),
-                () -> assertNotNull(result.startDate()),
-                () -> assertFalse(result.startDate().isBefore(beforeExecution)),
-                () -> assertFalse(result.startDate().isAfter(afterExecution)),
-                () -> assertNull(result.endDate())
+                () -> assertEquals(
+                        4L,
+                        result.repairCaseId()
+                ),
+                () -> assertEquals(
+                        1L,
+                        result.consoleId()
+                ),
+                () -> assertEquals(
+                        "Game Boy",
+                        result.consoleName()
+                ),
+                () -> assertEquals(
+                        "Console does not power on",
+                        result.title()
+                ),
+                () -> assertEquals(
+                        "The power LED does not illuminate",
+                        result.description()
+                ),
+                () -> assertEquals(
+                        RepairStatus.OPEN,
+                        result.status()
+                ),
+                () -> assertNotNull(
+                        result.startDate()
+                ),
+                () -> assertFalse(
+                        result.startDate()
+                                .isBefore(beforeExecution)
+                ),
+                () -> assertFalse(
+                        result.startDate()
+                                .isAfter(afterExecution)
+                ),
+                () -> assertNull(
+                        result.endDate()
+                )
         );
 
         verify(consoleRepository).findById(1L);
-        verify(repairCaseRepository).save(any(RepairCase.class));
+        verify(repairCaseRepository)
+                .save(any(RepairCase.class));
 
         verifyNoMoreInteractions(consoleRepository);
         verifyNoMoreInteractions(repairCaseRepository);
@@ -291,28 +592,67 @@ class RepairCaseServiceTest {
     @Test
     void addRepairCaseSavesCorrectData() {
 
-        RepairCaseRequestDTO request = new RepairCaseRequestDTO(1L, "Buttons are unresponsive", "The A and B buttons do not respond consistently", RepairStatus.IN_PROGRESS);
+        RepairCaseRequestDTO request =
+                new RepairCaseRequestDTO(
+                        1L,
+                        "Buttons are unresponsive",
+                        "The A and B buttons do not respond consistently",
+                        RepairStatus.IN_PROGRESS
+                );
 
-        when(consoleRepository.findById(1L)).thenReturn(Optional.of(gameBoy));
-        when(repairCaseRepository.save(any(RepairCase.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        ArgumentCaptor<RepairCase> captor = ArgumentCaptor.forClass(RepairCase.class);
+        when(consoleRepository.findById(1L))
+                .thenReturn(Optional.of(gameBoy));
 
-        LocalDateTime beforeExecution = LocalDateTime.now();
+        when(
+                repairCaseRepository
+                        .save(any(RepairCase.class))
+        ).thenAnswer(
+                invocation ->
+                        invocation.getArgument(0)
+        );
+
+        ArgumentCaptor<RepairCase> captor =
+                ArgumentCaptor.forClass(
+                        RepairCase.class
+                );
+
         repairCaseService.addRepairCase(request);
-        LocalDateTime afterExecution = LocalDateTime.now();
-        verify(repairCaseRepository).save(captor.capture());
-        RepairCase savedRepairCase = captor.getValue();
+
+        verify(repairCaseRepository)
+                .save(captor.capture());
+
+        RepairCase savedRepairCase =
+                captor.getValue();
+
         assertNotNull(savedRepairCase);
+
         assertAll(
-                () -> assertNull(savedRepairCase.getRepairCaseId()),
-                () -> assertEquals("Buttons are unresponsive", savedRepairCase.getTitle()),
-                () -> assertEquals("The A and B buttons do not respond consistently", savedRepairCase.getDescription()),
-                () -> assertEquals(RepairStatus.IN_PROGRESS, savedRepairCase.getStatus()),
-                () -> assertNotNull(savedRepairCase.getStartDate()),
-                () -> assertFalse(savedRepairCase.getStartDate().isBefore(beforeExecution)),
-                () -> assertFalse(savedRepairCase.getStartDate().isAfter(afterExecution)),
-                () -> assertNull(savedRepairCase.getEndDate()),
-                () -> assertSame(gameBoy, savedRepairCase.getConsole())
+                () -> assertNull(
+                        savedRepairCase
+                                .getRepairCaseId()
+                ),
+                () -> assertEquals(
+                        "Buttons are unresponsive",
+                        savedRepairCase.getTitle()
+                ),
+                () -> assertEquals(
+                        "The A and B buttons do not respond consistently",
+                        savedRepairCase.getDescription()
+                ),
+                () -> assertEquals(
+                        RepairStatus.IN_PROGRESS,
+                        savedRepairCase.getStatus()
+                ),
+                () -> assertNotNull(
+                        savedRepairCase.getStartDate()
+                ),
+                () -> assertNull(
+                        savedRepairCase.getEndDate()
+                ),
+                () -> assertSame(
+                        gameBoy,
+                        savedRepairCase.getConsole()
+                )
         );
 
         verify(consoleRepository).findById(1L);
@@ -324,59 +664,148 @@ class RepairCaseServiceTest {
     @Test
     void addRepairCaseThrowsExceptionWhenConsoleDoesNotExist() {
 
-        RepairCaseRequestDTO request = new RepairCaseRequestDTO(99L, "Console does not power on", "The power LED does not illuminate", RepairStatus.OPEN);
+        RepairCaseRequestDTO request =
+                new RepairCaseRequestDTO(
+                        99L,
+                        "Console does not power on",
+                        "The power LED does not illuminate",
+                        RepairStatus.OPEN
+                );
 
-        when(consoleRepository.findById(99L)).thenReturn(Optional.empty());
+        when(consoleRepository.findById(99L))
+                .thenReturn(Optional.empty());
 
-        ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class, () -> repairCaseService.addRepairCase(request));
+        ResourceNotFoundException exception =
+                assertThrows(
+                        ResourceNotFoundException.class,
+                        () ->
+                                repairCaseService
+                                        .addRepairCase(request)
+                );
 
-        assertEquals("Console not found", exception.getMessage());
+        assertEquals(
+                "Console not found",
+                exception.getMessage()
+        );
 
         verify(consoleRepository).findById(99L);
-        verify(repairCaseRepository, never()).save(any(RepairCase.class));
+
+        verify(
+                repairCaseRepository,
+                never()
+        ).save(
+                any(RepairCase.class)
+        );
+
         verifyNoMoreInteractions(consoleRepository);
-        verifyNoInteractions(repairCaseRepository, componentTestRepository);
+
+        verifyNoInteractions(
+                repairCaseRepository,
+                componentTestRepository
+        );
     }
 
     @Test
     void addRepairCaseThrowsExceptionWhenStatusIsClosed() {
 
-        RepairCaseRequestDTO request = new RepairCaseRequestDTO(1L, "Already repaired console", "This repair case should not be created", RepairStatus.CLOSED);
+        RepairCaseRequestDTO request =
+                new RepairCaseRequestDTO(
+                        1L,
+                        "Already repaired console",
+                        "This repair case should not be created",
+                        RepairStatus.CLOSED
+                );
 
-        InvalidRequestException exception = assertThrows(InvalidRequestException.class, () -> repairCaseService.addRepairCase(request));
+        InvalidRequestException exception =
+                assertThrows(
+                        InvalidRequestException.class,
+                        () ->
+                                repairCaseService
+                                        .addRepairCase(request)
+                );
 
-        assertEquals("A new repair case cannot be created as CLOSED", exception.getMessage());
+        assertEquals(
+                "A new repair case cannot be created as CLOSED",
+                exception.getMessage()
+        );
 
-        verifyNoInteractions(repairCaseRepository, consoleRepository, componentTestRepository);
+        verifyNoInteractions(
+                repairCaseRepository,
+                consoleRepository,
+                componentTestRepository
+        );
     }
-
-    // update repair case test
 
     @Test
     void updateRepairCaseReturnsUpdatedRepairCase() {
 
-        RepairCaseRequestDTO request = new RepairCaseRequestDTO(2L, "Updated repair title", "Updated repair description", RepairStatus.IN_PROGRESS);
+        RepairCaseRequestDTO request =
+                new RepairCaseRequestDTO(
+                        2L,
+                        "Updated repair title",
+                        "Updated repair description",
+                        RepairStatus.IN_PROGRESS
+                );
 
-        when(repairCaseRepository.findById(1L)).thenReturn(Optional.of(openRepairCase));
-        when(consoleRepository.findById(2L)).thenReturn(Optional.of(playStation));
-        when(repairCaseRepository.save(openRepairCase)).thenReturn(openRepairCase);
-        RepairCaseResponseDTO result =repairCaseService.updateRepairCase(1L, request);
+        when(repairCaseRepository.findById(1L))
+                .thenReturn(Optional.of(openRepairCase));
+
+        when(consoleRepository.findById(2L))
+                .thenReturn(Optional.of(playStation));
+
+        when(
+                repairCaseRepository
+                        .save(openRepairCase)
+        ).thenReturn(openRepairCase);
+
+        RepairCaseResponseDTO result =
+                repairCaseService
+                        .updateRepairCase(
+                                1L,
+                                request
+                        );
 
         assertNotNull(result);
+
         assertAll(
-                () -> assertEquals(1L, result.repairCaseId()),
-                () -> assertEquals(2L, result.consoleId()),
-                () -> assertEquals("PlayStation", result.consoleName()),
-                () -> assertEquals("Updated repair title", result.title()),
-                () -> assertEquals("Updated repair description", result.description()),
-                () -> assertEquals(RepairStatus.IN_PROGRESS, result.status()),
-                () -> assertEquals(firstStartDate, result.startDate()),
-                () -> assertNull(result.endDate())
+                () -> assertEquals(
+                        1L,
+                        result.repairCaseId()
+                ),
+                () -> assertEquals(
+                        2L,
+                        result.consoleId()
+                ),
+                () -> assertEquals(
+                        "PlayStation",
+                        result.consoleName()
+                ),
+                () -> assertEquals(
+                        "Updated repair title",
+                        result.title()
+                ),
+                () -> assertEquals(
+                        "Updated repair description",
+                        result.description()
+                ),
+                () -> assertEquals(
+                        RepairStatus.IN_PROGRESS,
+                        result.status()
+                ),
+                () -> assertEquals(
+                        firstStartDate,
+                        result.startDate()
+                ),
+                () -> assertNull(
+                        result.endDate()
+                )
         );
 
         verify(repairCaseRepository).findById(1L);
         verify(consoleRepository).findById(2L);
-        verify(repairCaseRepository).save(openRepairCase);
+        verify(repairCaseRepository)
+                .save(openRepairCase);
+
         verifyNoMoreInteractions(repairCaseRepository);
         verifyNoMoreInteractions(consoleRepository);
         verifyNoInteractions(componentTestRepository);
@@ -385,28 +814,79 @@ class RepairCaseServiceTest {
     @Test
     void updateRepairCaseSavesCorrectData() {
 
-        RepairCaseRequestDTO request = new RepairCaseRequestDTO(2L, "Optical drive inspection", "The optical drive must be inspected and calibrated", RepairStatus.IN_PROGRESS);
+        RepairCaseRequestDTO request =
+                new RepairCaseRequestDTO(
+                        2L,
+                        "Optical drive inspection",
+                        "The optical drive must be inspected and calibrated",
+                        RepairStatus.IN_PROGRESS
+                );
 
-        when(repairCaseRepository.findById(1L)).thenReturn(Optional.of(openRepairCase));
-        when(consoleRepository.findById(2L)).thenReturn(Optional.of(playStation));
+        when(repairCaseRepository.findById(1L))
+                .thenReturn(Optional.of(openRepairCase));
 
-        when(repairCaseRepository.save(any(RepairCase.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(consoleRepository.findById(2L))
+                .thenReturn(Optional.of(playStation));
 
-        ArgumentCaptor<RepairCase> captor = ArgumentCaptor.forClass(RepairCase.class);
+        when(
+                repairCaseRepository
+                        .save(any(RepairCase.class))
+        ).thenAnswer(
+                invocation ->
+                        invocation.getArgument(0)
+        );
 
-        repairCaseService.updateRepairCase(1L, request);
-        verify(repairCaseRepository).save(captor.capture());
-        RepairCase updatedRepairCase = captor.getValue();
+        ArgumentCaptor<RepairCase> captor =
+                ArgumentCaptor.forClass(
+                        RepairCase.class
+                );
+
+        repairCaseService.updateRepairCase(
+                1L,
+                request
+        );
+
+        verify(repairCaseRepository)
+                .save(captor.capture());
+
+        RepairCase updatedRepairCase =
+                captor.getValue();
+
         assertNotNull(updatedRepairCase);
+
         assertAll(
-                () -> assertSame(openRepairCase, updatedRepairCase),
-                () -> assertEquals(1L, updatedRepairCase.getRepairCaseId()),
-                () -> assertEquals("Optical drive inspection", updatedRepairCase.getTitle()),
-                () -> assertEquals("The optical drive must be inspected and calibrated", updatedRepairCase.getDescription()),
-                () -> assertEquals(RepairStatus.IN_PROGRESS, updatedRepairCase.getStatus()),
-                () -> assertEquals(firstStartDate, updatedRepairCase.getStartDate()),
-                () -> assertNull(updatedRepairCase.getEndDate()),
-                () -> assertSame(playStation, updatedRepairCase.getConsole())
+                () -> assertSame(
+                        openRepairCase,
+                        updatedRepairCase
+                ),
+                () -> assertEquals(
+                        1L,
+                        updatedRepairCase
+                                .getRepairCaseId()
+                ),
+                () -> assertEquals(
+                        "Optical drive inspection",
+                        updatedRepairCase.getTitle()
+                ),
+                () -> assertEquals(
+                        "The optical drive must be inspected and calibrated",
+                        updatedRepairCase.getDescription()
+                ),
+                () -> assertEquals(
+                        RepairStatus.IN_PROGRESS,
+                        updatedRepairCase.getStatus()
+                ),
+                () -> assertEquals(
+                        firstStartDate,
+                        updatedRepairCase.getStartDate()
+                ),
+                () -> assertNull(
+                        updatedRepairCase.getEndDate()
+                ),
+                () -> assertSame(
+                        playStation,
+                        updatedRepairCase.getConsole()
+                )
         );
 
         verify(repairCaseRepository).findById(1L);
@@ -420,60 +900,161 @@ class RepairCaseServiceTest {
     @Test
     void updateRepairCaseKeepsCurrentConsoleWhenConsoleIdIsNull() {
 
-        RepairCaseRequestDTO request = new RepairCaseRequestDTO(null, "Updated screen repair", "The display connector will be inspected", RepairStatus.IN_PROGRESS);
+        RepairCaseRequestDTO request =
+                new RepairCaseRequestDTO(
+                        null,
+                        "Updated screen repair",
+                        "The display connector will be inspected",
+                        RepairStatus.IN_PROGRESS
+                );
 
-        when(repairCaseRepository.findById(1L)).thenReturn(Optional.of(openRepairCase));
-        when(repairCaseRepository.save(openRepairCase)).thenReturn(openRepairCase);
+        when(repairCaseRepository.findById(1L))
+                .thenReturn(Optional.of(openRepairCase));
 
-        RepairCaseResponseDTO result = repairCaseService.updateRepairCase(1L, request);
+        when(
+                repairCaseRepository
+                        .save(openRepairCase)
+        ).thenReturn(openRepairCase);
+
+        RepairCaseResponseDTO result =
+                repairCaseService
+                        .updateRepairCase(
+                                1L,
+                                request
+                        );
 
         assertNotNull(result);
+
         assertAll(
-                () -> assertEquals(1L, result.repairCaseId()),
-                () -> assertEquals(1L, result.consoleId()),
-                () -> assertEquals("Game Boy", result.consoleName()),
-                () -> assertEquals("Updated screen repair", result.title()),
-                () -> assertEquals("The display connector will be inspected", result.description()),
-                () -> assertEquals(RepairStatus.IN_PROGRESS, result.status()),
-                () -> assertEquals(firstStartDate, result.startDate()),
-                () -> assertNull(result.endDate())
+                () -> assertEquals(
+                        1L,
+                        result.repairCaseId()
+                ),
+                () -> assertEquals(
+                        1L,
+                        result.consoleId()
+                ),
+                () -> assertEquals(
+                        "Game Boy",
+                        result.consoleName()
+                ),
+                () -> assertEquals(
+                        "Updated screen repair",
+                        result.title()
+                ),
+                () -> assertEquals(
+                        "The display connector will be inspected",
+                        result.description()
+                ),
+                () -> assertEquals(
+                        RepairStatus.IN_PROGRESS,
+                        result.status()
+                ),
+                () -> assertEquals(
+                        firstStartDate,
+                        result.startDate()
+                ),
+                () -> assertNull(
+                        result.endDate()
+                )
         );
 
         verify(repairCaseRepository).findById(1L);
-        verify(repairCaseRepository).save(openRepairCase);
+        verify(repairCaseRepository)
+                .save(openRepairCase);
+
         verifyNoMoreInteractions(repairCaseRepository);
-        verifyNoInteractions(consoleRepository, componentTestRepository);
+
+        verifyNoInteractions(
+                consoleRepository,
+                componentTestRepository
+        );
     }
 
     @Test
     void updateRepairCaseSetsEndDateWhenStatusChangesToClosed() {
 
-        RepairCaseRequestDTO request = new RepairCaseRequestDTO(1L, "Screen repair completed", "The display connector was replaced successfully", RepairStatus.CLOSED);
+        RepairCaseRequestDTO request =
+                new RepairCaseRequestDTO(
+                        1L,
+                        "Screen repair completed",
+                        "The display connector was replaced successfully",
+                        RepairStatus.CLOSED
+                );
 
-        when(repairCaseRepository.findById(1L)).thenReturn(Optional.of(openRepairCase));
-        when(consoleRepository.findById(1L)).thenReturn(Optional.of(gameBoy));
-        when(repairCaseRepository.save(openRepairCase)).thenReturn(openRepairCase);
+        when(repairCaseRepository.findById(1L))
+                .thenReturn(Optional.of(openRepairCase));
 
-        LocalDateTime beforeExecution = LocalDateTime.now();
-        RepairCaseResponseDTO result = repairCaseService.updateRepairCase(1L, request);
-        LocalDateTime afterExecution = LocalDateTime.now();
+        when(consoleRepository.findById(1L))
+                .thenReturn(Optional.of(gameBoy));
+
+        when(
+                repairCaseRepository
+                        .save(openRepairCase)
+        ).thenReturn(openRepairCase);
+
+        LocalDateTime beforeExecution =
+                LocalDateTime.now();
+
+        RepairCaseResponseDTO result =
+                repairCaseService
+                        .updateRepairCase(
+                                1L,
+                                request
+                        );
+
+        LocalDateTime afterExecution =
+                LocalDateTime.now();
+
         assertNotNull(result);
+
         assertAll(
-                () -> assertEquals(1L, result.repairCaseId()),
-                () -> assertEquals(1L, result.consoleId()),
-                () -> assertEquals("Game Boy", result.consoleName()),
-                () -> assertEquals("Screen repair completed", result.title()),
-                () -> assertEquals("The display connector was replaced successfully", result.description()),
-                () -> assertEquals(RepairStatus.CLOSED,result.status()),
-                () -> assertEquals(firstStartDate, result.startDate()),
-                () -> assertNotNull(result.endDate()),
-                () -> assertFalse(result.endDate().isBefore(beforeExecution)),
-                () -> assertFalse(result.endDate().isAfter(afterExecution))
+                () -> assertEquals(
+                        1L,
+                        result.repairCaseId()
+                ),
+                () -> assertEquals(
+                        1L,
+                        result.consoleId()
+                ),
+                () -> assertEquals(
+                        "Game Boy",
+                        result.consoleName()
+                ),
+                () -> assertEquals(
+                        "Screen repair completed",
+                        result.title()
+                ),
+                () -> assertEquals(
+                        "The display connector was replaced successfully",
+                        result.description()
+                ),
+                () -> assertEquals(
+                        RepairStatus.CLOSED,
+                        result.status()
+                ),
+                () -> assertEquals(
+                        firstStartDate,
+                        result.startDate()
+                ),
+                () -> assertNotNull(
+                        result.endDate()
+                ),
+                () -> assertFalse(
+                        result.endDate()
+                                .isBefore(beforeExecution)
+                ),
+                () -> assertFalse(
+                        result.endDate()
+                                .isAfter(afterExecution)
+                )
         );
 
         verify(repairCaseRepository).findById(1L);
         verify(consoleRepository).findById(1L);
-        verify(repairCaseRepository).save(openRepairCase);
+        verify(repairCaseRepository)
+                .save(openRepairCase);
+
         verifyNoMoreInteractions(repairCaseRepository);
         verifyNoMoreInteractions(consoleRepository);
         verifyNoInteractions(componentTestRepository);
@@ -482,24 +1063,53 @@ class RepairCaseServiceTest {
     @Test
     void updateRepairCaseDoesNotSetEndDateWhenStatusIsNotClosed() {
 
-        RepairCaseRequestDTO request =new RepairCaseRequestDTO(1L, "Screen repair in progress", "The display connector is being inspected", RepairStatus.IN_PROGRESS);
+        RepairCaseRequestDTO request =
+                new RepairCaseRequestDTO(
+                        1L,
+                        "Screen repair in progress",
+                        "The display connector is being inspected",
+                        RepairStatus.IN_PROGRESS
+                );
 
-        when(repairCaseRepository.findById(1L)).thenReturn(Optional.of(openRepairCase));
-        when(consoleRepository.findById(1L)).thenReturn(Optional.of(gameBoy));
-        when(repairCaseRepository.save(openRepairCase)).thenReturn(openRepairCase);
+        when(repairCaseRepository.findById(1L))
+                .thenReturn(Optional.of(openRepairCase));
 
-        RepairCaseResponseDTO result = repairCaseService.updateRepairCase(1L, request);
+        when(consoleRepository.findById(1L))
+                .thenReturn(Optional.of(gameBoy));
+
+        when(
+                repairCaseRepository
+                        .save(openRepairCase)
+        ).thenReturn(openRepairCase);
+
+        RepairCaseResponseDTO result =
+                repairCaseService
+                        .updateRepairCase(
+                                1L,
+                                request
+                        );
 
         assertNotNull(result);
+
         assertAll(
-                () -> assertEquals(RepairStatus.IN_PROGRESS, result.status()),
-                () -> assertEquals(firstStartDate, result.startDate()),
-                () -> assertNull(result.endDate())
+                () -> assertEquals(
+                        RepairStatus.IN_PROGRESS,
+                        result.status()
+                ),
+                () -> assertEquals(
+                        firstStartDate,
+                        result.startDate()
+                ),
+                () -> assertNull(
+                        result.endDate()
+                )
         );
 
         verify(repairCaseRepository).findById(1L);
         verify(consoleRepository).findById(1L);
-        verify(repairCaseRepository).save(openRepairCase);
+        verify(repairCaseRepository)
+                .save(openRepairCase);
+
         verifyNoMoreInteractions(repairCaseRepository);
         verifyNoMoreInteractions(consoleRepository);
         verifyNoInteractions(componentTestRepository);
@@ -508,53 +1118,134 @@ class RepairCaseServiceTest {
     @Test
     void updateRepairCaseThrowsExceptionWhenRepairCaseDoesNotExist() {
 
-        RepairCaseRequestDTO request = new RepairCaseRequestDTO(1L, "Updated title", "Updated description", RepairStatus.IN_PROGRESS);
+        RepairCaseRequestDTO request =
+                new RepairCaseRequestDTO(
+                        1L,
+                        "Updated title",
+                        "Updated description",
+                        RepairStatus.IN_PROGRESS
+                );
 
-        when(repairCaseRepository.findById(99L)).thenReturn(Optional.empty());
+        when(repairCaseRepository.findById(99L))
+                .thenReturn(Optional.empty());
 
-        ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class, () -> repairCaseService.updateRepairCase(99L, request));
+        ResourceNotFoundException exception =
+                assertThrows(
+                        ResourceNotFoundException.class,
+                        () ->
+                                repairCaseService
+                                        .updateRepairCase(
+                                                99L,
+                                                request
+                                        )
+                );
 
-        assertEquals("Repair case not found", exception.getMessage());
+        assertEquals(
+                "Repair case not found",
+                exception.getMessage()
+        );
 
         verify(repairCaseRepository).findById(99L);
-        verify(repairCaseRepository, never()).save(any(RepairCase.class));
+
+        verify(
+                repairCaseRepository,
+                never()
+        ).save(any(RepairCase.class));
+
         verifyNoMoreInteractions(repairCaseRepository);
-        verifyNoInteractions(consoleRepository, componentTestRepository
+
+        verifyNoInteractions(
+                consoleRepository,
+                componentTestRepository
         );
     }
 
     @Test
     void updateRepairCaseThrowsExceptionWhenRepairCaseIsAlreadyClosed() {
 
-        RepairCaseRequestDTO request = new RepairCaseRequestDTO(2L, "Modified closed repair", "This modification should not be accepted", RepairStatus.IN_PROGRESS);
+        RepairCaseRequestDTO request =
+                new RepairCaseRequestDTO(
+                        2L,
+                        "Modified closed repair",
+                        "This modification should not be accepted",
+                        RepairStatus.IN_PROGRESS
+                );
 
-        when(repairCaseRepository.findById(3L)).thenReturn(Optional.of(closedRepairCase));
+        when(repairCaseRepository.findById(3L))
+                .thenReturn(Optional.of(closedRepairCase));
 
-        InvalidRequestException exception = assertThrows(InvalidRequestException.class, () -> repairCaseService.updateRepairCase(3L, request));
+        InvalidRequestException exception =
+                assertThrows(
+                        InvalidRequestException.class,
+                        () ->
+                                repairCaseService
+                                        .updateRepairCase(
+                                                3L,
+                                                request
+                                        )
+                );
 
-        assertEquals("Closed repair cases cannot be modified", exception.getMessage());
+        assertEquals(
+                "Closed repair cases cannot be modified",
+                exception.getMessage()
+        );
 
         verify(repairCaseRepository).findById(3L);
-        verify(repairCaseRepository, never()).save(any(RepairCase.class));
+
+        verify(
+                repairCaseRepository,
+                never()
+        ).save(any(RepairCase.class));
+
         verifyNoMoreInteractions(repairCaseRepository);
-        verifyNoInteractions(consoleRepository, componentTestRepository);
+
+        verifyNoInteractions(
+                consoleRepository,
+                componentTestRepository
+        );
     }
 
     @Test
     void updateRepairCaseThrowsExceptionWhenConsoleDoesNotExist() {
 
-        RepairCaseRequestDTO request = new RepairCaseRequestDTO(99L, "Updated repair title", "Updated repair description", RepairStatus.IN_PROGRESS);
+        RepairCaseRequestDTO request =
+                new RepairCaseRequestDTO(
+                        99L,
+                        "Updated repair title",
+                        "Updated repair description",
+                        RepairStatus.IN_PROGRESS
+                );
 
-        when(repairCaseRepository.findById(1L)).thenReturn(Optional.of(openRepairCase));
-        when(consoleRepository.findById(99L)).thenReturn(Optional.empty());
+        when(repairCaseRepository.findById(1L))
+                .thenReturn(Optional.of(openRepairCase));
 
-        ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class, () -> repairCaseService.updateRepairCase(1L, request));
+        when(consoleRepository.findById(99L))
+                .thenReturn(Optional.empty());
 
-        assertEquals("Console not found", exception.getMessage());
+        ResourceNotFoundException exception =
+                assertThrows(
+                        ResourceNotFoundException.class,
+                        () ->
+                                repairCaseService
+                                        .updateRepairCase(
+                                                1L,
+                                                request
+                                        )
+                );
+
+        assertEquals(
+                "Console not found",
+                exception.getMessage()
+        );
 
         verify(repairCaseRepository).findById(1L);
         verify(consoleRepository).findById(99L);
-        verify(repairCaseRepository, never()).save(any(RepairCase.class));
+
+        verify(
+                repairCaseRepository,
+                never()
+        ).save(any(RepairCase.class));
+
         verifyNoMoreInteractions(repairCaseRepository);
         verifyNoMoreInteractions(consoleRepository);
         verifyNoInteractions(componentTestRepository);
@@ -563,59 +1254,78 @@ class RepairCaseServiceTest {
     @Test
     void updateRepairCaseThrowsExceptionWhenStartDateIsAfterEndDate() {
 
-        LocalDateTime futureStartDate = LocalDateTime.now().plusDays(2);
+        LocalDateTime futureStartDate =
+                LocalDateTime.now()
+                        .plusDays(2);
 
-        RepairCase invalidRepairCase = createRepairCase(4L, gameBoy, "Invalid dates", "The start date is in the future", RepairStatus.OPEN, futureStartDate, null);
+        RepairCase invalidRepairCase =
+                createRepairCase(
+                        4L,
+                        gameBoy,
+                        "Invalid dates",
+                        "The start date is in the future",
+                        RepairStatus.OPEN,
+                        futureStartDate,
+                        null
+                );
 
-        RepairCaseRequestDTO request = new RepairCaseRequestDTO(1L, "Closing invalid repair case", "This should fail because the dates are invalid", RepairStatus.CLOSED);
+        RepairCaseRequestDTO request =
+                new RepairCaseRequestDTO(
+                        1L,
+                        "Closing invalid repair case",
+                        "This should fail because the dates are invalid",
+                        RepairStatus.CLOSED
+                );
 
-        when(repairCaseRepository.findById(4L)).thenReturn(Optional.of(invalidRepairCase));
-        when(consoleRepository.findById(1L)).thenReturn(Optional.of(gameBoy));
-        InvalidRequestException exception = assertThrows(InvalidRequestException.class, () -> repairCaseService.updateRepairCase(4L, request));
+        when(repairCaseRepository.findById(4L))
+                .thenReturn(
+                        Optional.of(invalidRepairCase)
+                );
 
-        assertEquals("Start date cannot be after end date", exception.getMessage());
+        when(consoleRepository.findById(1L))
+                .thenReturn(Optional.of(gameBoy));
+
+        InvalidRequestException exception =
+                assertThrows(
+                        InvalidRequestException.class,
+                        () ->
+                                repairCaseService
+                                        .updateRepairCase(
+                                                4L,
+                                                request
+                                        )
+                );
+
+        assertEquals(
+                "Start date cannot be after end date",
+                exception.getMessage()
+        );
 
         verify(repairCaseRepository).findById(4L);
         verify(consoleRepository).findById(1L);
-        verify(repairCaseRepository, never()).save(any(RepairCase.class));
+
+        verify(
+                repairCaseRepository,
+                never()
+        ).save(any(RepairCase.class));
 
         verifyNoMoreInteractions(repairCaseRepository);
         verifyNoMoreInteractions(consoleRepository);
         verifyNoInteractions(componentTestRepository);
     }
 
-    //delete repair case test
-
     @Test
     void deleteRepairCaseDeletesRepairCase() {
 
-        when(repairCaseRepository.findById(1L)).thenReturn(Optional.of(openRepairCase));
-
-        when(componentTestRepository.existsByRepairCaseRepairCaseId(1L)).thenReturn(false);
+        when(repairCaseRepository.findById(1L))
+                .thenReturn(Optional.of(openRepairCase));
 
         repairCaseService.deleteRepairCase(1L);
 
         verify(repairCaseRepository).findById(1L);
-        verify(componentTestRepository).existsByRepairCaseRepairCaseId(1L);
+
         verify(repairCaseRepository).delete(openRepairCase);
-        verifyNoMoreInteractions(repairCaseRepository);
-        verifyNoMoreInteractions(componentTestRepository);
-        verifyNoInteractions(consoleRepository);
-    }
 
-    @Test
-    void deleteRepairCaseThrowsExceptionWhenRepairCaseHasComponentTests() {
-
-        when(repairCaseRepository.findById(1L)).thenReturn(Optional.of(openRepairCase));
-        when(componentTestRepository.existsByRepairCaseRepairCaseId(1L)).thenReturn(true);
-
-        ResourceInUseException exception = assertThrows(ResourceInUseException.class, () -> repairCaseService.deleteRepairCase(1L));
-
-        assertEquals("Cannot delete a repair case with associated component tests", exception.getMessage());
-
-        verify(repairCaseRepository).findById(1L);
-        verify(componentTestRepository).existsByRepairCaseRepairCaseId(1L);
-        verify(repairCaseRepository, never()).delete(any(RepairCase.class));
         verifyNoMoreInteractions(repairCaseRepository);
         verifyNoMoreInteractions(componentTestRepository);
         verifyNoInteractions(consoleRepository);
@@ -624,54 +1334,95 @@ class RepairCaseServiceTest {
     @Test
     void deleteRepairCaseThrowsExceptionWhenRepairCaseDoesNotExist() {
 
-        when(repairCaseRepository.findById(99L)).thenReturn(Optional.empty());
+        when(repairCaseRepository.findById(99L))
+                .thenReturn(Optional.empty());
 
-        ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class, () -> repairCaseService.deleteRepairCase(99L));
+        ResourceNotFoundException exception =
+                assertThrows(
+                        ResourceNotFoundException.class,
+                        () ->
+                                repairCaseService
+                                        .deleteRepairCase(99L)
+                );
 
-        assertEquals("Repair case not found", exception.getMessage());
+        assertEquals(
+                "Repair case not found",
+                exception.getMessage()
+        );
 
         verify(repairCaseRepository).findById(99L);
-        verify(repairCaseRepository, never()).delete(any(RepairCase.class));
-        verifyNoMoreInteractions(repairCaseRepository);
-        verifyNoInteractions(consoleRepository, componentTestRepository);
-    }
 
-    // entity finder
+        verify(
+                repairCaseRepository,
+                never()
+        ).delete(any(RepairCase.class));
+
+        verifyNoMoreInteractions(repairCaseRepository);
+
+        verifyNoInteractions(
+                consoleRepository,
+                componentTestRepository
+        );
+    }
 
     @Test
     void findRepairEntityCaseByIdReturnsRepairCase() {
 
-        when(repairCaseRepository.findById(1L)).thenReturn(Optional.of(openRepairCase));
-        RepairCase result = repairCaseService.findRepairEntityCaseById(1L);
+        when(repairCaseRepository.findById(1L))
+                .thenReturn(Optional.of(openRepairCase));
+
+        RepairCase result =
+                repairCaseService
+                        .findRepairEntityCaseById(1L);
 
         assertNotNull(result);
         assertSame(openRepairCase, result);
 
         verify(repairCaseRepository).findById(1L);
         verifyNoMoreInteractions(repairCaseRepository);
-        verifyNoInteractions(consoleRepository, componentTestRepository
+
+        verifyNoInteractions(
+                consoleRepository,
+                componentTestRepository
         );
     }
 
     @Test
     void findRepairEntityCaseByIdThrowsExceptionWhenRepairCaseDoesNotExist() {
 
-        when(repairCaseRepository.findById(99L)).thenReturn(Optional.empty());
+        when(repairCaseRepository.findById(99L))
+                .thenReturn(Optional.empty());
 
-        ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class, () -> repairCaseService.findRepairEntityCaseById(99L));
+        ResourceNotFoundException exception =
+                assertThrows(
+                        ResourceNotFoundException.class,
+                        () ->
+                                repairCaseService
+                                        .findRepairEntityCaseById(99L)
+                );
 
-        assertEquals("Repair case not found", exception.getMessage());
+        assertEquals(
+                "Repair case not found",
+                exception.getMessage()
+        );
 
         verify(repairCaseRepository).findById(99L);
         verifyNoMoreInteractions(repairCaseRepository);
-        verifyNoInteractions(consoleRepository, componentTestRepository);
+
+        verifyNoInteractions(
+                consoleRepository,
+                componentTestRepository
+        );
     }
 
-    // helper methods
-
-    private Manufacturer createManufacturer(Long id, String name, String countryCode
+    private Manufacturer createManufacturer(
+            Long id,
+            String name,
+            String countryCode
     ) {
-        Manufacturer manufacturer = new Manufacturer();
+
+        Manufacturer manufacturer =
+                new Manufacturer();
 
         manufacturer.setManufacturerId(id);
         manufacturer.setManufacturerName(name);
@@ -680,26 +1431,53 @@ class RepairCaseServiceTest {
         return manufacturer;
     }
 
-    private ConsoleModel createConsoleModel(Long id, String name, Integer releaseYear, Manufacturer manufacturer) {
-        ConsoleModel consoleModel = new ConsoleModel();
+    private ConsoleModel createConsoleModel(
+            Long id,
+            String name,
+            Integer releaseYear,
+            Manufacturer manufacturer
+    ) {
+
+        ConsoleModel consoleModel =
+                new ConsoleModel();
 
         consoleModel.setConsoleModelId(id);
         consoleModel.setConsoleModelName(name);
         consoleModel.setReleaseYear(releaseYear);
         consoleModel.setManufacturer(manufacturer);
+
         return consoleModel;
     }
 
-    private Console createConsole(Long id, ConsoleModel consoleModel, String serialNumber) {
-        Console console = new Console();
+    private Console createConsole(
+            Long id,
+            ConsoleModel consoleModel,
+            String serialNumber
+    ) {
+
+        Console console =
+                new Console();
+
         console.setConsoleId(id);
         console.setConsoleModel(consoleModel);
         console.setSerialNumber(serialNumber);
+
         return console;
     }
 
-    private RepairCase createRepairCase(Long id, Console console, String title, String description, RepairStatus status, LocalDateTime startDate, LocalDateTime endDate) {
-        RepairCase repairCase = new RepairCase();
+    private RepairCase createRepairCase(
+            Long id,
+            Console console,
+            String title,
+            String description,
+            RepairStatus status,
+            LocalDateTime startDate,
+            LocalDateTime endDate
+    ) {
+
+        RepairCase repairCase =
+                new RepairCase();
+
         repairCase.setRepairCaseId(id);
         repairCase.setConsole(console);
         repairCase.setTitle(title);

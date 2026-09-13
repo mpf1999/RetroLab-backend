@@ -60,9 +60,9 @@ public class ComponentService {
     public ComponentResponseDTO updateComponent(Long id, ComponentRequestDTO componentRequestDTO) {
 
         componentRepository.findByConsoleModelConsoleModelIdAndName(componentRequestDTO.consoleModelId(), componentRequestDTO.name()).filter(component -> !component.getComponentId().equals(id)).ifPresent(component -> {
-                    throw new ResourceAlreadyExistsException(
-                            "A component with this name already exists");
-                });
+            throw new ResourceAlreadyExistsException(
+                    "A component with this name already exists");
+        });
 
         Component existingComponent = findComponentEntityById(id);
 
@@ -75,11 +75,6 @@ public class ComponentService {
 
     public void deleteComponent(Long id) {
         Component component = findComponentEntityById(id);
-        if (componentTestRepository.existsByComponentComponentId(id)) {
-            throw new ResourceInUseException(
-                    "Cannot delete a component with associated component tests"
-            );
-        }
         componentRepository.delete(component);
     }
 

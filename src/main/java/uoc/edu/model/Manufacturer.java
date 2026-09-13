@@ -17,7 +17,8 @@ public class Manufacturer {
     @Column(nullable = false)
     private String countryCode;
 
-    @OneToMany(mappedBy = "manufacturer")
+    @OneToMany(mappedBy = "manufacturer",
+    cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ConsoleModel> consoleModels = new ArrayList<>();
 
     public Manufacturer(Long manufacturerId, String manufacturerName, String countryCode, List<ConsoleModel> consoleModels) {

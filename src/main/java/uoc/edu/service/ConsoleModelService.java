@@ -1,6 +1,7 @@
 package uoc.edu.service;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import uoc.edu.dto.ConsoleModelRequestDTO;
 import uoc.edu.dto.ConsoleModelResponseDTO;
 import uoc.edu.exception.InvalidRequestException;
@@ -79,17 +80,9 @@ public class ConsoleModelService {
         return mapToResponseDTO(savedConsoleModel);
     }
 
+    @Transactional
     public void deleteConsoleModel(Long id) {
         ConsoleModel consoleModel = findConsoleModelEntityById(id);
-        if (consoleRepository.existsByConsoleModelConsoleModelId(id)) {
-            throw new ResourceInUseException(
-                    "Cannot delete a console model with associated consoles");
-        }
-        if(componentRepository.existsByConsoleModelConsoleModelId(id)){
-            throw new ResourceInUseException(
-                    "Cannot delete a console model with associated components"
-            );
-        }
         consoleModelRepository.delete(consoleModel);
     }
 
@@ -100,12 +93,13 @@ public class ConsoleModelService {
     }
 
     private ConsoleModel findConsoleModelEntityById(Long id) {
-        return consoleModelRepository.findById(id).orElseThrow(()-> new ResourceNotFoundException("Console model not found"));
+        return consoleModelRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Console model not found"));
     }
 
     private Manufacturer findManufacturerEntityById(Long id) {
-        return manufacturerRepository.findById(id).orElseThrow(()-> new ResourceNotFoundException("Associated manufacturer not found"));
+        return manufacturerRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Associated manufacturer not found"));
     }
+
     private ConsoleModelResponseDTO mapToResponseDTO(ConsoleModel consoleModel) {
         return new ConsoleModelResponseDTO(
                 consoleModel.getConsoleModelId(),

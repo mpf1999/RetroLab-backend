@@ -68,7 +68,7 @@ class ConsoleModelServiceTest {
     void getAllConsoleModelsReturnsConsoleModels() {
         when(consoleModelRepository.findAll()).thenReturn(List.of(gameBoy, playStation));
 
-        List<ConsoleModelResponseDTO> result =consoleModelService.getAllConsoleModels();
+        List<ConsoleModelResponseDTO> result = consoleModelService.getAllConsoleModels();
 
         assertNotNull(result);
         assertEquals(2, result.size());
@@ -136,7 +136,7 @@ class ConsoleModelServiceTest {
     void getConsoleModelByIdThrowsExceptionWhenConsoleModelDoesNotExist() {
         when(consoleModelRepository.findById(99L)).thenReturn(Optional.empty());
 
-        ResourceNotFoundException exception =assertThrows(ResourceNotFoundException.class, () -> consoleModelService.getConsoleModelById(99L));
+        ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class, () -> consoleModelService.getConsoleModelById(99L));
 
         assertEquals("Console model not found", exception.getMessage());
 
@@ -156,9 +156,9 @@ class ConsoleModelServiceTest {
         when(manufacturerRepository.findById(1L)).thenReturn(Optional.of(nintendo));
         when(consoleModelRepository.findByConsoleModelName("Nintendo 64")).thenReturn(Optional.empty());
         when(consoleModelRepository.save(any(ConsoleModel.class))).thenAnswer(invocation -> {
-                    ConsoleModel consoleModel = invocation.getArgument(0);
-                    consoleModel.setConsoleModelId(3L);
-                    return consoleModel;
+            ConsoleModel consoleModel = invocation.getArgument(0);
+            consoleModel.setConsoleModelId(3L);
+            return consoleModel;
         });
 
         ConsoleModelResponseDTO result = consoleModelService.addConsoleModel(request);
@@ -188,7 +188,7 @@ class ConsoleModelServiceTest {
         when(consoleModelRepository.findByConsoleModelName("Game Boy Color")).thenReturn(Optional.empty());
         when(consoleModelRepository.save(any(ConsoleModel.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        ArgumentCaptor<ConsoleModel> captor =ArgumentCaptor.forClass(ConsoleModel.class);
+        ArgumentCaptor<ConsoleModel> captor = ArgumentCaptor.forClass(ConsoleModel.class);
 
         consoleModelService.addConsoleModel(request);
 
@@ -241,7 +241,7 @@ class ConsoleModelServiceTest {
     @Test
     void addConsoleModelThrowsExceptionWhenNameAlreadyExists() {
 
-        ConsoleModelRequestDTO request =new ConsoleModelRequestDTO("Game Boy", 1989, 1L);
+        ConsoleModelRequestDTO request = new ConsoleModelRequestDTO("Game Boy", 1989, 1L);
         when(manufacturerRepository.findById(1L)).thenReturn(Optional.of(nintendo));
         when(consoleModelRepository.findByConsoleModelName("Game Boy")).thenReturn(Optional.of(gameBoy));
 
@@ -267,7 +267,7 @@ class ConsoleModelServiceTest {
         when(manufacturerRepository.findById(2L)).thenReturn(Optional.of(sony));
         when(consoleModelRepository.save(gameBoy)).thenReturn(gameBoy);
 
-        ConsoleModelResponseDTO result =consoleModelService.updateConsoleModel(1L, request);
+        ConsoleModelResponseDTO result = consoleModelService.updateConsoleModel(1L, request);
 
         assertNotNull(result);
 
@@ -316,7 +316,7 @@ class ConsoleModelServiceTest {
     @Test
     void updateConsoleModelAllowsKeepingItsCurrentName() {
 
-        ConsoleModelRequestDTO request =new ConsoleModelRequestDTO("Game Boy", 1990, 1L);
+        ConsoleModelRequestDTO request = new ConsoleModelRequestDTO("Game Boy", 1990, 1L);
 
         when(consoleModelRepository.findByConsoleModelName("Game Boy")).thenReturn(Optional.of(gameBoy));
         when(consoleModelRepository.findById(1L)).thenReturn(Optional.of(gameBoy));
@@ -341,7 +341,7 @@ class ConsoleModelServiceTest {
         int futureYear = Year.now().getValue() + 1;
         ConsoleModelRequestDTO request = new ConsoleModelRequestDTO("Future Console", futureYear, 1L);
 
-        InvalidRequestException exception =assertThrows(InvalidRequestException.class, () -> consoleModelService.updateConsoleModel(1L, request));
+        InvalidRequestException exception = assertThrows(InvalidRequestException.class, () -> consoleModelService.updateConsoleModel(1L, request));
 
         assertEquals("Release year cannot be in the future", exception.getMessage());
 
@@ -409,18 +409,20 @@ class ConsoleModelServiceTest {
 
     @Test
     void deleteConsoleModelDeletesConsoleModel() {
+        Long consoleModelId = 1L;
 
-        when(consoleModelRepository.findById(1L)).thenReturn(Optional.of(gameBoy));
-        when(consoleRepository.existsByConsoleModelConsoleModelId(1L)).thenReturn(false);
-        when(componentRepository.existsByConsoleModelConsoleModelId(1L)).thenReturn(false);
+        ConsoleModel consoleModel = new ConsoleModel();
+        consoleModel.setConsoleModelId(consoleModelId);
 
-        consoleModelService.deleteConsoleModel(1L);
+        when(consoleModelRepository.findById(consoleModelId))
+                .thenReturn(Optional.of(consoleModel));
 
-        verify(consoleModelRepository).findById(1L);
-        verify(consoleRepository).existsByConsoleModelConsoleModelId(1L);
-        verify(componentRepository).existsByConsoleModelConsoleModelId(1L);
-        verify(consoleModelRepository).delete(gameBoy);
-        verifyNoInteractions(manufacturerRepository);
+        consoleModelService.deleteConsoleModel(consoleModelId);
+
+        verify(consoleModelRepository).findById(consoleModelId);
+        verify(consoleModelRepository).delete(consoleModel);
+
+        verifyNoInteractions(consoleRepository);
     }
 
     @Test
@@ -437,41 +439,6 @@ class ConsoleModelServiceTest {
         verify(consoleModelRepository, never()).delete(any(ConsoleModel.class));
 
         verifyNoInteractions(manufacturerRepository, consoleRepository, componentRepository);
-    }
-
-    @Test
-    void deleteConsoleModelThrowsExceptionWhenItHasConsoles() {
-
-        when(consoleModelRepository.findById(1L)).thenReturn(Optional.of(gameBoy));
-        when(consoleRepository.existsByConsoleModelConsoleModelId(1L)).thenReturn(true);
-        ResourceInUseException exception = assertThrows(ResourceInUseException.class, () -> consoleModelService.deleteConsoleModel(1L));
-
-        assertEquals("Cannot delete a console model with associated consoles", exception.getMessage());
-
-        verify(consoleModelRepository).findById(1L);
-        verify(consoleRepository).existsByConsoleModelConsoleModelId(1L);
-
-        verifyNoInteractions(manufacturerRepository, componentRepository);
-        verify(consoleModelRepository, never()).delete(any(ConsoleModel.class));
-    }
-
-    @Test
-    void deleteConsoleModelThrowsExceptionWhenItHasComponents() {
-
-        when(consoleModelRepository.findById(1L)).thenReturn(Optional.of(gameBoy));
-        when(consoleRepository.existsByConsoleModelConsoleModelId(1L)).thenReturn(false);
-        when(componentRepository.existsByConsoleModelConsoleModelId(1L)).thenReturn(true);
-
-
-        ResourceInUseException exception = assertThrows(ResourceInUseException.class, () -> consoleModelService.deleteConsoleModel(1L));
-
-        assertEquals("Cannot delete a console model with associated components", exception.getMessage());
-
-        verify(consoleModelRepository).findById(1L);
-        verify(consoleRepository).existsByConsoleModelConsoleModelId(1L);
-        verify(componentRepository).existsByConsoleModelConsoleModelId(1L);
-        verify(consoleModelRepository, never()).delete(any(ConsoleModel.class));
-        verifyNoInteractions(manufacturerRepository);
     }
 
     // helper methods

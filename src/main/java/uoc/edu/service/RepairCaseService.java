@@ -1,6 +1,7 @@
 package uoc.edu.service;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import uoc.edu.dto.RepairCaseRequestDTO;
 import uoc.edu.dto.RepairCaseResponseDTO;
 import uoc.edu.exception.ResourceInUseException;
@@ -70,7 +71,6 @@ public class RepairCaseService {
     }
 
 
-
     public RepairCaseResponseDTO updateRepairCase(
             Long id,
             RepairCaseRequestDTO repairCaseRequestDTO
@@ -91,10 +91,6 @@ public class RepairCaseService {
             );
         }
 
-        /*
-         * Una vez superadas las validaciones,
-         * se modifica la entidad.
-         */
         existingRepairCase.setConsole(console);
         existingRepairCase.setTitle(
                 repairCaseRequestDTO.title()
@@ -123,20 +119,18 @@ public class RepairCaseService {
         return mapToResponseDTO(savedRepairCase);
     }
 
+    @Transactional
     public void deleteRepairCase(Long id) {
         RepairCase repairCase = findRepairEntityCaseById(id);
-        if (componentTestRepository.existsByRepairCaseRepairCaseId(id)) {
-            throw new ResourceInUseException(
-                    "Cannot delete a repair case with associated component tests");
-        }
-
         repairCaseRepository.delete(repairCase);
     }
+
     public RepairCase findRepairEntityCaseById(Long id) {
-        return repairCaseRepository.findById(id).orElseThrow(()-> new ResourceNotFoundException("Repair case not found"));
+        return repairCaseRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Repair case not found"));
     }
+
     private Console findConsoleEntityCaseById(Long id) {
-        return consoleRepository.findById(id).orElseThrow(()-> new ResourceNotFoundException("Console not found"));
+        return consoleRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Console not found"));
     }
 
     private void validateRepairDates(LocalDateTime startDate, LocalDateTime endDate) {

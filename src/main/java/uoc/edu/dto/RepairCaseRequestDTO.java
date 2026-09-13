@@ -9,7 +9,7 @@ public record RepairCaseRequestDTO(
         @NotNull(message = "Console ID is required")
         Long consoleId,
 
-        @NotBlank(message= "Title is required")
+        @NotBlank(message = "Title is required")
         String title,
 
         @NotBlank(message = "Description is required")

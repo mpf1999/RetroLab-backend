@@ -1,11 +1,14 @@
 package uoc.edu.model;
 
 import jakarta.persistence.*;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
+@EntityListeners(AuditingEntityListener.class)
 public class ComponentTest {
 
     @Id
@@ -16,19 +19,16 @@ public class ComponentTest {
     private BigDecimal measuredCurrent;
     private BigDecimal measuredResistance;
     private BigDecimal temperature;
+    private Boolean continuity;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private TestResult result;
     private String notes;
 
+    @CreatedDate
     @Column(nullable = false, updatable = false)
     private LocalDateTime testDate;
-
-    @PrePersist
-    public void prePersist() {
-        this.testDate = LocalDateTime.now();
-    }
 
     @ManyToOne
     @JoinColumn(name = "repair_case_id", nullable = false)
@@ -38,18 +38,20 @@ public class ComponentTest {
     @JoinColumn(name = "component_id", nullable = false)
     private Component component;
 
-    public ComponentTest(Long componentTestId, BigDecimal measuredVoltage, BigDecimal measuredCurrent, BigDecimal measuredResistance, BigDecimal temperature, RepairCase repairCase, Component component) {
+    public ComponentTest(Long componentTestId, BigDecimal measuredVoltage, BigDecimal measuredCurrent, BigDecimal measuredResistance, BigDecimal temperature, Boolean continuity, RepairCase repairCase, Component component) {
         this.componentTestId = componentTestId;
         this.measuredVoltage = measuredVoltage;
         this.measuredCurrent = measuredCurrent;
         this.measuredResistance = measuredResistance;
         this.temperature = temperature;
+        this.continuity = continuity;
         this.repairCase = repairCase;
         this.component = component;
         this.result = TestResult.NOT_TESTED;
         this.notes = "";
         this.testDate = LocalDateTime.now();
     }
+
     public ComponentTest() {
 
     }
@@ -128,6 +130,14 @@ public class ComponentTest {
 
     public LocalDateTime getTestDate() {
         return testDate;
+    }
+
+    public Boolean getContinuity() {
+        return continuity;
+    }
+
+    public void setContinuity(Boolean continuity) {
+        this.continuity = continuity;
     }
 
     public void setTestDate(LocalDateTime testDate) {

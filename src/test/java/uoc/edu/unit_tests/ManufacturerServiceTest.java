@@ -245,7 +245,7 @@ class ManufacturerServiceTest {
 
     @Test
     void updateManufacturerAllowsKeepingCurrentName() {
-        ManufacturerRequestDTO request =new ManufacturerRequestDTO("Nintendo", "US");
+        ManufacturerRequestDTO request = new ManufacturerRequestDTO("Nintendo", "US");
 
         //findByManufacturerName returns the same manufacturer, since it is the same we update it does not throw exception
         when(manufacturerRepository.findById(1L)).thenReturn(Optional.of(nintendo));
@@ -314,30 +314,10 @@ class ManufacturerServiceTest {
     void deleteManufacturerDeletesManufacturer() {
         when(manufacturerRepository.findById(1L)).thenReturn(Optional.of(nintendo));
 
-        when(consoleModelRepository.existsByManufacturerManufacturerId(1L)).thenReturn(false);
         manufacturerService.deleteManufacturer(1L);
 
         verify(manufacturerRepository).findById(1L);
-        verify(consoleModelRepository).existsByManufacturerManufacturerId(1L);
         verify(manufacturerRepository).delete(nintendo);
-
-        verifyNoMoreInteractions(manufacturerRepository);
-        verifyNoMoreInteractions(consoleModelRepository);
-    }
-
-    @Test
-    void deleteManufacturerThrowsExceptionWhenManufacturerIsInUse() {
-        when(manufacturerRepository.findById(1L)).thenReturn(Optional.of(nintendo));
-
-        when(consoleModelRepository.existsByManufacturerManufacturerId(1L)).thenReturn(true);
-
-        ResourceInUseException exception = assertThrows(ResourceInUseException.class, () -> manufacturerService.deleteManufacturer(1L));
-
-        assertEquals("Cannot delete a manufacturer with associated console models", exception.getMessage());
-
-        verify(manufacturerRepository).findById(1L);
-        verify(consoleModelRepository).existsByManufacturerManufacturerId(1L);
-        verify(manufacturerRepository, never()).delete(any(Manufacturer.class));
 
         verifyNoMoreInteractions(manufacturerRepository);
         verifyNoMoreInteractions(consoleModelRepository);

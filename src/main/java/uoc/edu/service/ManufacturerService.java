@@ -65,12 +65,6 @@ public class ManufacturerService {
 
     public void deleteManufacturer(Long id) {
         Manufacturer manufacturer = findManufacturerEntityById(id);
-
-        if (consoleModelRepository.existsByManufacturerManufacturerId(id)) {
-            throw new ResourceInUseException(
-                    "Cannot delete a manufacturer with associated console models");
-        }
-
         manufacturerRepository.delete(manufacturer);
     }
 
@@ -79,7 +73,8 @@ public class ManufacturerService {
                 manufacturer.getManufacturerId(), manufacturer.getManufacturerName(), manufacturer.getCountryCode()
         );
     }
+
     public Manufacturer findManufacturerEntityById(Long id) {
-        return manufacturerRepository.findById(id).orElseThrow(()-> new ResourceNotFoundException("Manufacturer not found"));
+        return manufacturerRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Manufacturer not found"));
     }
 }

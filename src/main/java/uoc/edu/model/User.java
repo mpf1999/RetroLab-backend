@@ -27,6 +27,7 @@ public class User {
 
     @Column(nullable = false)
     private LocalDateTime createdAt;
+
     public User() {
         this.createdAt = LocalDateTime.now();
         this.role = Role.USER;

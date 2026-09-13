@@ -9,5 +9,7 @@ import java.util.Optional;
 
 public interface ConsoleRepository extends JpaRepository<Console, Long> {
     boolean existsByConsoleModelConsoleModelId(Long consoleModelId);
+
     Optional<Console> findBySerialNumber(String serialNumber);
+    List<Console> findByOwnerId(Long userId);
 }

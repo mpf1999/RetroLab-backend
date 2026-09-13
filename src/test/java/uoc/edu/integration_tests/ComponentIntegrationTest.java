@@ -9,6 +9,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.RequestPostProcessor;
@@ -16,592 +17,276 @@ import org.springframework.transaction.annotation.Transactional;
 import uoc.edu.dto.ComponentRequestDTO;
 import uoc.edu.model.Component;
 import uoc.edu.model.ConsoleModel;
-import uoc.edu.model.Manufacturer;
 import uoc.edu.repository.ComponentRepository;
 import uoc.edu.repository.ConsoleModelRepository;
-import uoc.edu.repository.ManufacturerRepository;
 
+import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.hasSize;
-import static org.junit.jupiter.api.Assertions.assertAll;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
 @AutoConfigureMockMvc
+@ActiveProfiles("dev")
+// every test runs inside a transaction, so changes are rolled back
 @Transactional
 class ComponentIntegrationTest {
 
     private static final String BASE_URL = "/api/v1/components";
     private static final String LOGIN_URL = "/api/v1/auth/login";
 
-    @Autowired
-    private MockMvc mockMvc;
+    @Autowired private MockMvc mockMvc;
+    @Autowired private ComponentRepository componentRepository;
+    @Autowired private ConsoleModelRepository consoleModelRepository;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
-
-    @Autowired
-    private ComponentRepository componentRepository;
-
-    @Autowired
-    private ConsoleModelRepository consoleModelRepository;
-
-    @Autowired
-    private ManufacturerRepository manufacturerRepository;
-
-    private Manufacturer nintendo;
-    private Manufacturer sony;
-
     private ConsoleModel gameBoy;
-    private ConsoleModel playStation;
-
-    private Component gameBoyScreen;
-    private Component gameBoySpeaker;
-
+    private ConsoleModel playStation2;
+    private Component gameBoyDisplay;
+    private Component gameBoyPowerBoard;
     private String jwt;
 
     @BeforeEach
     void setUp() throws Exception {
-        nintendo = createManufacturer("Nintendo", "JP");
-
-        sony = createManufacturer("Sony", "JP");
-
-        nintendo = manufacturerRepository.save(nintendo);
-        sony = manufacturerRepository.save(sony);
-        gameBoy = createConsoleModel("Game Boy", 1989, nintendo);
-        playStation = createConsoleModel("PlayStation", 1994, sony);
-        gameBoy = consoleModelRepository.save(gameBoy);
-        playStation = consoleModelRepository.save(playStation);
-
-        gameBoyScreen = createComponent(gameBoy, "Screen", "Original Game Boy LCD screen");
-        gameBoySpeaker = createComponent(gameBoy, "Speaker", "Original Game Boy speaker");
-
-        gameBoyScreen = componentRepository.save(gameBoyScreen);
-        gameBoySpeaker = componentRepository.save(gameBoySpeaker);
-
+        // integration tests reuse the real database created at startup, no duplications
+        gameBoy = findConsoleModel("Game Boy");
+        playStation2 = findConsoleModel("PlayStation 2");
+        gameBoyDisplay = findComponent(gameBoy, "LCD display");
+        gameBoyPowerBoard = findComponent(gameBoy, "Power board");
         login();
     }
 
-    private void login() throws Exception {
-
-        String loginRequest = """
-                {
-                    "email": "admin@retrolab.com",
-                    "password": "ChangeMe123!"
-                }
-                """;
-
-        MvcResult result = mockMvc.perform(post(LOGIN_URL).contentType(MediaType.APPLICATION_JSON).content(loginRequest))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.token").isString())
-                .andReturn();
-
-        String responseBody = result.getResponse().getContentAsString();
-        jwt = JsonPath.read(responseBody, "$.token");
-        assertNotNull(jwt);
-    }
-
-    private RequestPostProcessor authenticated() {
-
-        return request -> {request.addHeader(HttpHeaders.AUTHORIZATION, "Bearer " + jwt);
-            return request;
-        };
-    }
-
-    // get all components
-
     @Test
-    void getAllComponentsReturnsComponents() throws Exception {
-
-        mockMvc.perform(get(BASE_URL).with(authenticated()).accept(MediaType.APPLICATION_JSON))
+    void getAllComponentsReturnsInitializerData() throws Exception {
+        mockMvc.perform(get(BASE_URL).with(authenticated()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(2)))
-                .andExpect(jsonPath("$[0].componentId").value(gameBoyScreen.getComponentId()))
-                .andExpect(jsonPath("$[0].consoleModelId").value(gameBoy.getConsoleModelId()))
-                .andExpect(jsonPath("$[0].name").value("Screen"))
-                .andExpect(jsonPath("$[0].description").value("Original Game Boy LCD screen"))
-                .andExpect(jsonPath("$[1].componentId").value(gameBoySpeaker.getComponentId()))
-                .andExpect(jsonPath("$[1].consoleModelId").value(gameBoy.getConsoleModelId()))
-                .andExpect(jsonPath("$[1].name").value("Speaker"))
-                .andExpect(jsonPath("$[1].description").value("Original Game Boy speaker"));
+                .andExpect(jsonPath("$", hasSize(6)))
+                // hasItems avoids coupling the test to database row order
+                .andExpect(jsonPath("$[*].name", hasItems("Power board", "LCD display",
+                        "Top screen", "Optical drive", "Battery circuit", "Video output")));
     }
 
     @Test
-    void getAllComponentsReturnsEmptyList() throws Exception {
-
-        componentRepository.deleteAll();
-        mockMvc.perform(get(BASE_URL).with(authenticated()).accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andExpect(jsonPath("$", hasSize(0)));
-    }
-
-    // get component by id int test
-    @Test
-    void getComponentByIdReturnsCorrectData() throws Exception {
-
-        mockMvc.perform(get(BASE_URL + "/{id}", gameBoyScreen.getComponentId()).with(authenticated()).accept(MediaType.APPLICATION_JSON))
+    void getComponentByIdReturnsComponent() throws Exception {
+        mockMvc.perform(get(BASE_URL + "/{id}", gameBoyDisplay.getComponentId()).with(authenticated()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.componentId").value(gameBoyScreen.getComponentId()))
+                .andExpect(jsonPath("$.componentId").value(gameBoyDisplay.getComponentId()))
                 .andExpect(jsonPath("$.consoleModelId").value(gameBoy.getConsoleModelId()))
-                .andExpect(jsonPath("$.name").value("Screen"))
-                .andExpect(jsonPath("$.description").value("Original Game Boy LCD screen"));
+                .andExpect(jsonPath("$.name").value("LCD display"))
+                .andExpect(jsonPath("$.description")
+                        .value("LCD that I smuggled in the black market"));
     }
 
     @Test
-    void getComponentByIdReturnsNotFoundWhenComponentDoesNotExist() throws Exception {
-
-        mockMvc.perform(get(BASE_URL + "/{id}", 999999L).with(authenticated()).accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.status").value(404))
-                .andExpect(jsonPath("$.error").value("Not Found"))
-                .andExpect(jsonPath("$.message").value("Component not found"))
-                .andExpect(jsonPath("$.path").value(BASE_URL + "/999999"));
+    void getComponentByIdReturnsNotFound() throws Exception {
+        assertComponentNotFound(get(BASE_URL + "/{id}", 999999L), BASE_URL + "/999999");
     }
 
-    // udd component int tests
-
     @Test
-    void addComponentSavesCorrectData() throws Exception {
+    void addComponentSavesComponent() throws Exception {
+        ComponentRequestDTO request = request(playStation2, "Power supply",
+                "Internal PlayStation 2 power supply");
 
-        ComponentRequestDTO request = new ComponentRequestDTO(playStation.getConsoleModelId(), "Power supply", "Internal PlayStation power supply");
-        mockMvc.perform(post(BASE_URL).with(authenticated()).contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(request))
-                )
+        mockMvc.perform(post(BASE_URL).with(authenticated())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json(request)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.componentId").isNumber())
-                .andExpect(jsonPath("$.consoleModelId").value(playStation.getConsoleModelId()))
-                .andExpect(jsonPath("$.name").value("Power supply"))
-                .andExpect(jsonPath("$.description").value("Internal PlayStation power supply"));
+                .andExpect(jsonPath("$.consoleModelId").value(playStation2.getConsoleModelId()))
+                .andExpect(jsonPath("$.name").value("Power supply"));
 
-        Component savedComponent =componentRepository.findAll()
-                        .stream()
-                        .filter(component ->
-                                component.getName()
-                                        .equals("Power supply"))
-                        .findFirst()
-                        .orElseThrow();
-
-        assertNotNull(savedComponent);
-
-        assertAll(
-                () -> assertNotNull(savedComponent.getComponentId()),
-                () -> assertEquals(playStation.getConsoleModelId(), savedComponent.getConsoleModel().getConsoleModelId()),
-                () -> assertEquals("PlayStation", savedComponent.getConsoleModel().getConsoleModelName()),
-                () -> assertEquals("Power supply", savedComponent.getName()),
-                () -> assertEquals("Internal PlayStation power supply", savedComponent.getDescription())
-        );
+        Component saved = findComponent(playStation2, "Power supply");
+        assertEquals("PlayStation 2", saved.getConsoleModel().getConsoleModelName());
+        assertEquals(7, componentRepository.count());
     }
 
     @Test
-    void addComponentReturnsConflictWhenNameAlreadyExistsForConsoleModel() throws Exception {
-
-        ComponentRequestDTO request = new ComponentRequestDTO(gameBoy.getConsoleModelId(), "Screen", "Another screen for the same console model");
-        mockMvc.perform(post(BASE_URL).with(authenticated()).contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(request)))
+    void addComponentReturnsConflictForDuplicateNameInSameModel() throws Exception {
+        // Component names must be unique inside same model
+        ComponentRequestDTO request = request(gameBoy, "LCD display", "Duplicate");
+        mockMvc.perform(post(BASE_URL).with(authenticated())
+                        .contentType(MediaType.APPLICATION_JSON).content(json(request)))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.status").value(409))
                 .andExpect(jsonPath("$.error").value("Conflict"))
                 .andExpect(jsonPath("$.path").value(BASE_URL));
 
-        assertEquals(2, componentRepository.count());
+        assertEquals(6, componentRepository.count());
     }
 
     @Test
-    void addComponentAllowsSameNameForDifferentConsoleModel() throws Exception {
+    void addComponentAllowsSameNameInDifferentModel() throws Exception {
+        // must be allowed if models are different
+        ComponentRequestDTO request = request(playStation2, "LCD display", "PS2 display");
 
-        ComponentRequestDTO request = new ComponentRequestDTO(playStation.getConsoleModelId(), "Screen", "PlayStation video output component");
-
-        mockMvc.perform(post(BASE_URL).with(authenticated()).contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(request)))
+        mockMvc.perform(post(BASE_URL).with(authenticated())
+                        .contentType(MediaType.APPLICATION_JSON).content(json(request)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.consoleModelId").value(playStation.getConsoleModelId()))
-                .andExpect(jsonPath("$.name").value("Screen"))
-                .andExpect(jsonPath("$.description").value("PlayStation video output component"));
+                .andExpect(jsonPath("$.consoleModelId").value(playStation2.getConsoleModelId()))
+                .andExpect(jsonPath("$.name").value("LCD display"));
 
-        Component savedComponent = componentRepository.findAll()
-                        .stream()
-                        .filter(component ->
-                                component.getName().equals("Screen")
-                                        && component.getConsoleModel()
-                                        .getConsoleModelId()
-                                        .equals(
-                                                playStation
-                                                        .getConsoleModelId()
-                                        ))
-                        .findFirst()
-                        .orElseThrow();
-
-        assertAll(
-                () -> assertNotNull(savedComponent.getComponentId()),
-                () -> assertEquals("Screen", savedComponent.getName()),
-                () -> assertEquals(playStation.getConsoleModelId(), savedComponent.getConsoleModel().getConsoleModelId()),
-                () -> assertEquals(3, componentRepository.count())
-        );
+        assertNotNull(findComponent(playStation2, "LCD display").getComponentId());
+        assertEquals(7, componentRepository.count());
     }
 
     @Test
-    void addComponentReturnsNotFoundWhenConsoleModelDoesNotExist() throws Exception {
-
-        ComponentRequestDTO request = new ComponentRequestDTO(999999L, "CPU", "Component with invalid console model");
-
-        mockMvc.perform(post(BASE_URL).with(authenticated()).contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(request)))
+    void addComponentReturnsNotFoundForMissingModel() throws Exception {
+        ComponentRequestDTO request = new ComponentRequestDTO(999999L, "CPU", "Invalid model");
+        mockMvc.perform(post(BASE_URL).with(authenticated())
+                        .contentType(MediaType.APPLICATION_JSON).content(json(request)))
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.status").value(404))
-                .andExpect(jsonPath("$.error").value("Not Found"))
-                .andExpect(jsonPath("$.message").value("Console model not found"))
-                .andExpect(jsonPath("$.path").value(BASE_URL));
+                .andExpect(jsonPath("$.message").value("Console model not found"));
     }
 
-    // update componets int test
-
     @Test
-    void updateComponentSavesCorrectData() throws Exception {
+    void updateComponentSavesChanges() throws Exception {
+        Long id = gameBoyDisplay.getComponentId();
+        ComponentRequestDTO request = request(playStation2, "Video output", "Updated video component");
 
-        Long componentId = gameBoyScreen.getComponentId();
-        ComponentRequestDTO request = new ComponentRequestDTO(playStation.getConsoleModelId(), "Video output", "Updated video component");
-
-        mockMvc.perform(put(BASE_URL + "/{id}", componentId).with(authenticated()).contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(request)))
+        mockMvc.perform(put(BASE_URL + "/{id}", id).with(authenticated())
+                        .contentType(MediaType.APPLICATION_JSON).content(json(request)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.componentId").value(componentId))
-                .andExpect(jsonPath("$.consoleModelId").value(playStation.getConsoleModelId()))
-                .andExpect(jsonPath("$.name").value("Video output"))
-                .andExpect(jsonPath("$.description").value("Updated video component"));
+                .andExpect(jsonPath("$.componentId").value(id))
+                .andExpect(jsonPath("$.consoleModelId").value(playStation2.getConsoleModelId()))
+                .andExpect(jsonPath("$.name").value("Video output"));
 
-        Component updatedComponent= componentRepository.findById(componentId).orElseThrow();
-
-        assertNotNull(updatedComponent);
-
+        Component updated = componentRepository.findById(id).orElseThrow();
         assertAll(
-                () -> assertEquals(componentId, updatedComponent.getComponentId()),
-                () -> assertEquals(playStation.getConsoleModelId(), updatedComponent.getConsoleModel().getConsoleModelId()),
-                () -> assertEquals("PlayStation", updatedComponent.getConsoleModel().getConsoleModelName()),
-                () -> assertEquals("Video output", updatedComponent.getName()),
-                () -> assertEquals("Updated video component", updatedComponent.getDescription())
+                () -> assertEquals("Video output", updated.getName()),
+                () -> assertEquals("Updated video component", updated.getDescription()),
+                () -> assertEquals(playStation2.getConsoleModelId(),
+                        updated.getConsoleModel().getConsoleModelId())
         );
     }
 
     @Test
     void updateComponentAllowsKeepingCurrentName() throws Exception {
+        Long id = gameBoyDisplay.getComponentId();
+        ComponentRequestDTO request = request(gameBoy, "LCD display", "Updated description");
 
-        Long componentId =
-                gameBoyScreen.getComponentId();
-
-        ComponentRequestDTO request =
-                new ComponentRequestDTO(
-                        gameBoy.getConsoleModelId(),
-                        "Screen",
-                        "Updated screen description"
-                );
-
-        mockMvc.perform(
-                        put(BASE_URL + "/{id}", componentId)
-                                .with(authenticated())
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(
-                                        objectMapper.writeValueAsString(request)
-                                )
-                )
+        mockMvc.perform(put(BASE_URL + "/{id}", id).with(authenticated())
+                        .contentType(MediaType.APPLICATION_JSON).content(json(request)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.componentId")
-                        .value(componentId))
-                .andExpect(jsonPath("$.consoleModelId")
-                        .value(gameBoy.getConsoleModelId()))
-                .andExpect(jsonPath("$.name")
-                        .value("Screen"))
-                .andExpect(jsonPath("$.description")
-                        .value("Updated screen description"));
-
-        Component updatedComponent =
-                componentRepository.findById(componentId)
-                        .orElseThrow();
-
-        assertAll(
-                () -> assertEquals(
-                        "Screen",
-                        updatedComponent.getName()
-                ),
-                () -> assertEquals(
-                        "Updated screen description",
-                        updatedComponent.getDescription()
-                ),
-                () -> assertEquals(
-                        gameBoy.getConsoleModelId(),
-                        updatedComponent
-                                .getConsoleModel()
-                                .getConsoleModelId()
-                )
-        );
+                .andExpect(jsonPath("$.name").value("LCD display"))
+                .andExpect(jsonPath("$.description").value("Updated description"));
     }
 
     @Test
-    void updateComponentReturnsConflictWhenNameBelongsToAnotherComponent()
-            throws Exception {
+    void updateComponentReturnsConflictForDuplicateInSameModel() throws Exception {
+        Long id = gameBoyDisplay.getComponentId();
+        ComponentRequestDTO request = request(gameBoy, "Power board", "Duplicate");
 
-        Long componentId =
-                gameBoyScreen.getComponentId();
-
-        ComponentRequestDTO request =
-                new ComponentRequestDTO(
-                        gameBoy.getConsoleModelId(),
-                        "Speaker",
-                        "Duplicate speaker component"
-                );
-
-        mockMvc.perform(
-                        put(BASE_URL + "/{id}", componentId)
-                                .with(authenticated())
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(
-                                        objectMapper.writeValueAsString(request)
-                                )
-                )
+        mockMvc.perform(put(BASE_URL + "/{id}", id).with(authenticated())
+                        .contentType(MediaType.APPLICATION_JSON).content(json(request)))
                 .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.status")
-                        .value(409))
-                .andExpect(jsonPath("$.error")
-                        .value("Conflict"))
-                .andExpect(jsonPath("$.path")
-                        .value(BASE_URL + "/" + componentId));
+                .andExpect(jsonPath("$.status").value(409));
 
-        Component unchangedComponent =
-                componentRepository.findById(componentId)
-                        .orElseThrow();
-
-        assertAll(
-                () -> assertEquals(
-                        "Screen",
-                        unchangedComponent.getName()
-                ),
-                () -> assertEquals(
-                        "Original Game Boy LCD screen",
-                        unchangedComponent.getDescription()
-                ),
-                () -> assertEquals(
-                        gameBoy.getConsoleModelId(),
-                        unchangedComponent
-                                .getConsoleModel()
-                                .getConsoleModelId()
-                )
-        );
+        assertEquals("LCD display", componentRepository.findById(id).orElseThrow().getName());
     }
 
     @Test
-    void updateComponentAllowsSameNameWhenConsoleModelChanges()
-            throws Exception {
+    void updateComponentAllowsSameNameWhenModelChanges() throws Exception {
+        Long id = gameBoyPowerBoard.getComponentId();
+        ComponentRequestDTO request = request(playStation2, "Power board", "PS2 power board");
 
-        Component playStationScreen = createComponent(
-                playStation,
-                "Screen",
-                "PlayStation screen component"
-        );
-
-        playStationScreen =
-                componentRepository.save(playStationScreen);
-
-        Long componentId =
-                gameBoySpeaker.getComponentId();
-
-        ComponentRequestDTO request =
-                new ComponentRequestDTO(
-                        playStation.getConsoleModelId(),
-                        "Speaker",
-                        "PlayStation speaker"
-                );
-
-        mockMvc.perform(
-                        put(BASE_URL + "/{id}", componentId)
-                                .with(authenticated())
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(
-                                        objectMapper.writeValueAsString(request)
-                                )
-                )
+        mockMvc.perform(put(BASE_URL + "/{id}", id).with(authenticated())
+                        .contentType(MediaType.APPLICATION_JSON).content(json(request)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.componentId")
-                        .value(componentId))
-                .andExpect(jsonPath("$.consoleModelId")
-                        .value(playStation.getConsoleModelId()))
-                .andExpect(jsonPath("$.name")
-                        .value("Speaker"));
+                .andExpect(jsonPath("$.consoleModelId").value(playStation2.getConsoleModelId()))
+                .andExpect(jsonPath("$.name").value("Power board"));
+    }
 
-        Component updatedComponent =
-                componentRepository.findById(componentId)
-                        .orElseThrow();
-
-        assertAll(
-                () -> assertEquals(
-                        "Speaker",
-                        updatedComponent.getName()
-                ),
-                () -> assertEquals(
-                        playStation.getConsoleModelId(),
-                        updatedComponent
-                                .getConsoleModel()
-                                .getConsoleModelId()
-                ),
-                () -> assertEquals(
-                        "PlayStation speaker",
-                        updatedComponent.getDescription()
-                )
+    @Test
+    void updateComponentReturnsNotFoundForMissingComponent() throws Exception {
+        ComponentRequestDTO request = request(gameBoy, "CPU", "Updated CPU");
+        assertComponentNotFound(
+                put(BASE_URL + "/{id}", 999999L)
+                        .contentType(MediaType.APPLICATION_JSON).content(json(request)),
+                BASE_URL + "/999999"
         );
     }
 
     @Test
-    void updateComponentReturnsNotFoundWhenComponentDoesNotExist()
-            throws Exception {
-
-        ComponentRequestDTO request =
-                new ComponentRequestDTO(
-                        gameBoy.getConsoleModelId(),
-                        "CPU",
-                        "Updated CPU"
-                );
-
-        mockMvc.perform(
-                        put(BASE_URL + "/{id}", 999999L)
-                                .with(authenticated())
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(
-                                        objectMapper.writeValueAsString(request)
-                                )
-                )
+    void updateComponentReturnsNotFoundForMissingModel() throws Exception {
+        ComponentRequestDTO request = new ComponentRequestDTO(999999L, "LCD display", "Invalid");
+        mockMvc.perform(put(BASE_URL + "/{id}", gameBoyDisplay.getComponentId())
+                        .with(authenticated()).contentType(MediaType.APPLICATION_JSON)
+                        .content(json(request)))
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.status")
-                        .value(404))
-                .andExpect(jsonPath("$.error")
-                        .value("Not Found"))
-                .andExpect(jsonPath("$.message")
-                        .value("Component not found"))
-                .andExpect(jsonPath("$.path")
-                        .value(BASE_URL + "/999999"));
+                .andExpect(jsonPath("$.message").value("Console model not found"));
     }
 
     @Test
-    void updateComponentReturnsNotFoundWhenConsoleModelDoesNotExist()
-            throws Exception {
+    void deleteComponentRemovesComponentAndDependentTests() throws Exception {
+        Long id = gameBoyPowerBoard.getComponentId();
 
-        ComponentRequestDTO request =
-                new ComponentRequestDTO(
-                        999999L,
-                        "Screen",
-                        "Invalid console model"
-                );
+        mockMvc.perform(delete(BASE_URL + "/{id}", id).with(authenticated()))
+                .andExpect(status().isNoContent());
 
-        mockMvc.perform(
-                        put(
-                                BASE_URL + "/{id}",
-                                gameBoyScreen.getComponentId()
-                        )
-                                .with(authenticated())
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(
-                                        objectMapper.writeValueAsString(request)
-                                )
-                )
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.status")
-                        .value(404))
-                .andExpect(jsonPath("$.error")
-                        .value("Not Found"))
-                .andExpect(jsonPath("$.message")
-                        .value("Console model not found"))
-                .andExpect(jsonPath("$.path")
-                        .value(
-                                BASE_URL + "/"
-                                        + gameBoyScreen.getComponentId()
-                        ));
-    }
-
-    /*
-     DELETE component
-     */
-
-    @Test
-    void deleteComponentRemovesCorrectData() throws Exception {
-
-        Long componentId =
-                gameBoyScreen.getComponentId();
-
-        mockMvc.perform(
-                        delete(BASE_URL + "/{id}", componentId)
-                                .with(authenticated())
-                )
-                .andExpect(status().isOk());
-
-        assertAll(
-                () -> assertFalse(
-                        componentRepository.existsById(componentId)
-                ),
-                () -> assertTrue(
-                        componentRepository.existsById(
-                                gameBoySpeaker.getComponentId()
-                        )
-                )
-        );
+        assertFalse(componentRepository.existsById(id));
+        assertTrue(componentRepository.existsById(gameBoyDisplay.getComponentId()));
+        assertEquals(5, componentRepository.count());
     }
 
     @Test
-    void deleteComponentReturnsNotFoundWhenComponentDoesNotExist()
-            throws Exception {
+    void deleteComponentReturnsNotFound() throws Exception {
+        assertComponentNotFound(delete(BASE_URL + "/{id}", 999999L), BASE_URL + "/999999");
+    }
 
-        mockMvc.perform(
-                        delete(BASE_URL + "/{id}", 999999L)
-                                .with(authenticated())
-                )
+    private ConsoleModel findConsoleModel(String name) {
+        return consoleModelRepository.findByConsoleModelName(name)
+                .orElseThrow(() -> new IllegalStateException(
+                        "TestDataInitializer did not create console model: " + name));
+    }
+
+    private Component findComponent(ConsoleModel model, String name) {
+        return componentRepository.findAll().stream()
+                .filter(component -> component.getName().equals(name))
+                .filter(component -> component.getConsoleModel().getConsoleModelId()
+                        .equals(model.getConsoleModelId()))
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException(
+                        "TestDataInitializer did not create component: " + name));
+    }
+
+    private ComponentRequestDTO request(ConsoleModel model, String name, String description) {
+        return new ComponentRequestDTO(model.getConsoleModelId(), name, description);
+    }
+
+    private String json(Object value) throws Exception {
+        return objectMapper.writeValueAsString(value);
+    }
+
+    private void assertComponentNotFound(
+            org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder request,
+            String path
+    ) throws Exception {
+        mockMvc.perform(request.with(authenticated()))
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.status")
-                        .value(404))
-                .andExpect(jsonPath("$.error")
-                        .value("Not Found"))
-                .andExpect(jsonPath("$.message")
-                        .value("Component not found"))
-                .andExpect(jsonPath("$.path")
-                        .value(BASE_URL + "/999999"));
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.error").value("Not Found"))
+                .andExpect(jsonPath("$.message").value("Component not found"))
+                .andExpect(jsonPath("$.path").value(path));
     }
 
-    /*
-     Helper methods
-     */
-
-    private Manufacturer createManufacturer(
-            String manufacturerName,
-            String countryCode
-    ) {
-        Manufacturer manufacturer = new Manufacturer();
-
-        manufacturer.setManufacturerName(manufacturerName);
-        manufacturer.setCountryCode(countryCode);
-
-        return manufacturer;
+    private void login() throws Exception {
+        String body = """
+                {"email":"admin@retrolab.test","password":"Password123!"}
+                """;
+        MvcResult result = mockMvc.perform(post(LOGIN_URL)
+                        .contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.token").isString())
+                .andReturn();
+        jwt = JsonPath.read(result.getResponse().getContentAsString(), "$.token");
     }
 
-    private ConsoleModel createConsoleModel(
-            String consoleModelName,
-            Integer releaseYear,
-            Manufacturer manufacturer
-    ) {
-        ConsoleModel consoleModel = new ConsoleModel();
-
-        consoleModel.setConsoleModelName(consoleModelName);
-        consoleModel.setReleaseYear(releaseYear);
-        consoleModel.setManufacturer(manufacturer);
-
-        return consoleModel;
-    }
-
-    private Component createComponent(
-            ConsoleModel consoleModel,
-            String name,
-            String description
-    ) {
-        Component component = new Component();
-
-        component.setConsoleModel(consoleModel);
-        component.setName(name);
-        component.setDescription(description);
-
-        return component;
+    private RequestPostProcessor authenticated() {
+        return request -> {
+            request.addHeader(HttpHeaders.AUTHORIZATION, "Bearer " + jwt);
+            return request;
+        };
     }
 }

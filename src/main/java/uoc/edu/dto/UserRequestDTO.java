@@ -7,7 +7,7 @@ import jakarta.validation.constraints.Size;
 import uoc.edu.model.Role;
 
 public record UserRequestDTO(
-        @NotBlank (message = "A name is required")
+        @NotBlank(message = "A name is required")
         @Size(min = 2, max = 25, message = "Name cannot exceed 25 characters")
         String name,
 
@@ -22,4 +22,5 @@ public record UserRequestDTO(
                 message = "Password must contain at least one uppercase letter and one number"
         )
         String password,
-        Role role){}
+        Role role) {
+}

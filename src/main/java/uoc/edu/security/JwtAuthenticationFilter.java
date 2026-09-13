@@ -28,6 +28,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         this.userDetailsService = userDetailsService;
     }
 
+    // executed for every request, checks if it contains a valid JWT and if valid, authenticates the user
     @Override
     protected void doFilterInternal(
             @NonNull HttpServletRequest request,
@@ -37,23 +38,27 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String authorizationHeader = request.getHeader("Authorization");
 
+        // if there is no bearer, continue filter chain without authenticating
         if (authorizationHeader == null ||
                 !authorizationHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;
         }
-
+        //Remove bearer to only get jwt
         String token = authorizationHeader.substring(7);
 
         try {
             String email = jwtService.extractUsername(token);
 
+            // continue only if there is user and no authentication
             if (email != null &&
                     SecurityContextHolder.getContext().getAuthentication() == null) {
 
+                //load user
                 UserDetails userDetails =
                         userDetailsService.loadUserByUsername(email);
 
+                // validate token agaiunst user, then create Spring Security object containing it and its authorities
                 if (jwtService.isTokenValid(token, userDetails)) {
                     UsernamePasswordAuthenticationToken authentication =
                             new UsernamePasswordAuthenticationToken(
@@ -66,11 +71,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                             .setAuthentication(authentication);
                 }
             }
+            // invalid JWT are ignored
         } catch (JwtException | IllegalArgumentException ignored) {
-            // El token no es válido. La petición continúa sin autenticar
-            // y Spring Security devolverá 401 en una ruta protegida.
         }
-
+        // continue processing the request
         filterChain.doFilter(request, response);
     }
 }

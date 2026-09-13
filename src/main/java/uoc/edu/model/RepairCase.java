@@ -1,12 +1,16 @@
 package uoc.edu.model;
 
 import jakarta.persistence.*;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 @Entity
+@EntityListeners(AuditingEntityListener.class)
 public class RepairCase {
 
     @Id
@@ -21,18 +25,23 @@ public class RepairCase {
     @Column(nullable = false)
     private RepairStatus status;
 
-    @Column(nullable = false)
-    private LocalDateTime startDate;
-    private LocalDateTime endDate;
-
     @ManyToOne
     @JoinColumn(name = "console_id")
     private Console console;
 
+    // the relationship is mapped by repair case, if the repair case is eliminated the component tests are
     @OneToMany(mappedBy = "repairCase",
             cascade = CascadeType.ALL,
             orphanRemoval = true)
     private List<ComponentTest> componentTests = new ArrayList<>();
+
+    //automated startDate
+    @CreatedDate
+    @Column(nullable = false, updatable = false)
+    private LocalDateTime startDate;
+
+    @Column
+    private LocalDateTime endDate;
 
     public RepairCase() {
         this.startDate = LocalDateTime.now();

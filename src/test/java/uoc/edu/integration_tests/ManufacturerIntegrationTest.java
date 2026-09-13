@@ -9,21 +9,22 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.RequestPostProcessor;
 import org.springframework.transaction.annotation.Transactional;
 import uoc.edu.dto.ManufacturerRequestDTO;
-import uoc.edu.model.ConsoleModel;
 import uoc.edu.model.Manufacturer;
 import uoc.edu.repository.ConsoleModelRepository;
 import uoc.edu.repository.ManufacturerRepository;
 
+import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -33,6 +34,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
+@ActiveProfiles("dev")
 @Transactional
 class ManufacturerIntegrationTest {
 
@@ -53,10 +55,12 @@ class ManufacturerIntegrationTest {
 
     @BeforeEach
     void setUp() throws Exception {
-        nintendo = createManufacturer("Nintendo", "JP");
-        sony = createManufacturer("Sony", "JP");
-        nintendo = manufacturerRepository.save(nintendo);
-        sony = manufacturerRepository.save(sony);
+        nintendo = manufacturerRepository.findByManufacturerName("Nintendo")
+                .orElseThrow(() -> new IllegalStateException(
+                        "TestDataInitializer did not create Nintendo"));
+        sony = manufacturerRepository.findByManufacturerName("Sony")
+                .orElseThrow(() -> new IllegalStateException(
+                        "TestDataInitializer did not create Sony"));
 
         login();
     }
@@ -65,8 +69,8 @@ class ManufacturerIntegrationTest {
 
         String loginRequest = """
                 {
-                    "email": "admin@retrolab.com",
-                    "password": "ChangeMe123!"
+                    "email": "admin@retrolab.test",
+                    "password": "Password123!"
                 }
                 """;
         MvcResult result = mockMvc.perform(post(LOGIN_URL).contentType(MediaType.APPLICATION_JSON).content(loginRequest))
@@ -82,7 +86,8 @@ class ManufacturerIntegrationTest {
     // add jwt to every request so its authorized
 
     private RequestPostProcessor authenticated() {
-        return request -> {request.addHeader(HttpHeaders.AUTHORIZATION, "Bearer " + jwt);
+        return request -> {
+            request.addHeader(HttpHeaders.AUTHORIZATION, "Bearer " + jwt);
             return request;
         };
     }
@@ -90,28 +95,15 @@ class ManufacturerIntegrationTest {
     // get all manufacturers integration test
 
     @Test
-    void getAllManufacturersReturnsManufacturers() throws Exception {
+    void getAllManufacturersReturnsInitializerData() throws Exception {
 
         mockMvc.perform(get(BASE_URL).with(authenticated()).accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(2)))
+                .andExpect(jsonPath("$", hasSize(3)))
                 .andExpect(jsonPath("$[0].manufacturerId").isNumber())
-                .andExpect(jsonPath("$[0].manufacturerName")
-                        .value("Nintendo"))
-                .andExpect(jsonPath("$[0].countryCode")
-                        .value("JP"))
-                .andExpect(jsonPath("$[1].manufacturerId").isNumber())
-                .andExpect(jsonPath("$[1].manufacturerName")
-                        .value("Sony"))
-                .andExpect(jsonPath("$[1].countryCode")
-                        .value("JP"));
-    }
-
-    @Test
-    void getAllManufacturersReturnsEmptyList() throws Exception {
-
-        manufacturerRepository.deleteAll();
-        mockMvc.perform(get(BASE_URL).with(authenticated()).accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andExpect(jsonPath("$", hasSize(0)));
+                .andExpect(jsonPath("$[*].manufacturerName",
+                        hasItems("Nintendo", "Sony", "Sega")))
+                .andExpect(jsonPath("$[*].countryCode", hasItem("JP")));
     }
 
     // get manufact by id
@@ -143,19 +135,20 @@ class ManufacturerIntegrationTest {
     @Test
     void addManufacturerCreatesManufacturer() throws Exception {
 
-        ManufacturerRequestDTO request = new ManufacturerRequestDTO("Sega", "JP");
+        ManufacturerRequestDTO request = new ManufacturerRequestDTO("Atari", "US");
 
         mockMvc.perform(post(BASE_URL).with(authenticated()).contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.manufacturerId").isNumber())
-                .andExpect(jsonPath("$.manufacturerName").value("Sega"))
-                .andExpect(jsonPath("$.countryCode").value("JP"));
+                .andExpect(jsonPath("$.manufacturerName").value("Atari"))
+                .andExpect(jsonPath("$.countryCode").value("US"));
 
-        Manufacturer savedManufacturer = manufacturerRepository.findByManufacturerName("Sega").orElseThrow();
+        Manufacturer savedManufacturer = manufacturerRepository.findByManufacturerName("Atari").orElseThrow();
 
         assertNotNull(savedManufacturer.getManufacturerId());
-        assertEquals("Sega", savedManufacturer.getManufacturerName());
-        assertEquals("JP", savedManufacturer.getCountryCode());
+        assertEquals("Atari", savedManufacturer.getManufacturerName());
+        assertEquals("US", savedManufacturer.getCountryCode());
+        assertEquals(4, manufacturerRepository.count());
     }
 
     @Test
@@ -203,9 +196,9 @@ class ManufacturerIntegrationTest {
 
         ManufacturerRequestDTO request = new ManufacturerRequestDTO("Nintendo", "US");
         mockMvc.perform(put(BASE_URL + "/{id}", nintendo.getManufacturerId())
-                                .with(authenticated())
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(objectMapper.writeValueAsString(request))
+                        .with(authenticated())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request))
                 )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.manufacturerId").value(nintendo.getManufacturerId()))
@@ -229,14 +222,14 @@ class ManufacturerIntegrationTest {
                 .andExpect(jsonPath("$.error").value("Conflict"))
                 .andExpect(jsonPath("$.message").value("A manufacturer with this name already exists"))
                 .andExpect(jsonPath("$.path").value(BASE_URL + "/" + nintendo.getManufacturerId()));
-        Manufacturer normalManufacturer =manufacturerRepository.findById(nintendo.getManufacturerId()).orElseThrow();
+        Manufacturer normalManufacturer = manufacturerRepository.findById(nintendo.getManufacturerId()).orElseThrow();
         assertEquals("Nintendo", normalManufacturer.getManufacturerName());
     }
 
     @Test
     void updateManufacturerReturnsNotFoundWhenManufacturerDoesNotExist() throws Exception {
 
-        ManufacturerRequestDTO request = new ManufacturerRequestDTO("Sega", "JP");
+        ManufacturerRequestDTO request = new ManufacturerRequestDTO("Atari", "US");
         mockMvc.perform(put(BASE_URL + "/{id}", 999999L).with(authenticated()).contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(request))
                 )
                 .andExpect(status().isNotFound())
@@ -251,10 +244,15 @@ class ManufacturerIntegrationTest {
     @Test
     void deleteManufacturerDeletesManufacturer() throws Exception {
 
-        Long manufacturerId = nintendo.getManufacturerId();
+        Manufacturer atari = new Manufacturer();
+        atari.setManufacturerName("Atari");
+        atari.setCountryCode("US");
+        Long manufacturerId = manufacturerRepository.save(atari).getManufacturerId();
 
-        mockMvc.perform(delete(BASE_URL + "/{id}", manufacturerId).with(authenticated())).andExpect(status().isOk());
+        mockMvc.perform(delete(BASE_URL + "/{id}", manufacturerId).with(authenticated()))
+                .andExpect(status().isNoContent());
         assertFalse(manufacturerRepository.existsById(manufacturerId));
+        assertEquals(3, manufacturerRepository.count());
     }
 
     @Test
@@ -269,34 +267,20 @@ class ManufacturerIntegrationTest {
     }
 
     @Test
-    void deleteManufacturerReturnsConflictWhenManufacturerHasConsoleModels() throws Exception {
-        ConsoleModel consoleModel = createConsoleModel("Game Boy", 1989, nintendo);
-        consoleModelRepository.save(consoleModel);
+    void deleteManufacturerCascadesToAssociatedConsoleModels() throws Exception {
+        var consoleModelIds = consoleModelRepository.findAll().stream()
+                .filter(model -> model.getManufacturer().getManufacturerId()
+                        .equals(nintendo.getManufacturerId()))
+                .map(model -> model.getConsoleModelId())
+                .toList();
+
         mockMvc.perform(delete(BASE_URL + "/{id}", nintendo.getManufacturerId()).with(authenticated()))
-                .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.status").value(409))
-                .andExpect(jsonPath("$.error").value("Conflict"))
-                .andExpect(jsonPath("$.message").value("Cannot delete a manufacturer with " + "associated console models"))
-                .andExpect(jsonPath("$.path").value(BASE_URL + "/" + nintendo.getManufacturerId()));
-        assertTrue(manufacturerRepository.existsById(nintendo.getManufacturerId()));
-    }
+                .andExpect(status().isNoContent());
 
-    // helper
-
-    private Manufacturer createManufacturer(String manufacturerName, String countryCode) {
-        Manufacturer manufacturer = new Manufacturer();
-
-        manufacturer.setManufacturerName(manufacturerName);
-        manufacturer.setCountryCode(countryCode);
-        return manufacturer;
-    }
-
-    private ConsoleModel createConsoleModel(String consoleModelName, Integer releaseYear, Manufacturer manufacturer) {
-        ConsoleModel consoleModel = new ConsoleModel();
-        consoleModel.setConsoleModelName(consoleModelName);
-        consoleModel.setReleaseYear(releaseYear);
-        consoleModel.setManufacturer(manufacturer);
-
-        return consoleModel;
+        assertFalse(manufacturerRepository.existsById(nintendo.getManufacturerId()));
+        consoleModelIds.forEach(id ->
+                assertFalse(consoleModelRepository.existsById(id)));
+        assertEquals(2, manufacturerRepository.count());
+        assertEquals(3, consoleModelRepository.count());
     }
 }

@@ -3,10 +3,10 @@ package uoc.edu.dto;
 import uoc.edu.model.Condition;
 import uoc.edu.model.Status;
 
-import java.math.BigDecimal;
 
 public record ConsoleResponseDTO(Long consoleId,
                                  Long ownerId,
+                                 String ownerName,
                                  Long consoleModelId,
                                  String consoleModelName,
                                  String manufacturerName,
@@ -14,8 +14,9 @@ public record ConsoleResponseDTO(Long consoleId,
                                  String region,
                                  String color,
                                  Condition condition,
-                                 BigDecimal estimatedValue,
+                                 MoneyDTO estimatedValue,
                                  Status status,
-                                 String notes
-                                 ) {
+                                 String notes,
+                                 String imageUrl
+) {
 }

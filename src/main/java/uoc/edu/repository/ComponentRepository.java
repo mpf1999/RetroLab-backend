@@ -7,5 +7,6 @@ import java.util.Optional;
 
 public interface ComponentRepository extends JpaRepository<Component, Long> {
     Optional<Component> findByConsoleModelConsoleModelIdAndName(Long consoleModelId, String name);
+
     boolean existsByConsoleModelConsoleModelId(Long consoleModelId);
 }

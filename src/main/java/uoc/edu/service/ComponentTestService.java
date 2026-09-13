@@ -37,6 +37,7 @@ public class ComponentTestService {
                 componentTest.getMeasuredCurrent(),
                 componentTest.getMeasuredResistance(),
                 componentTest.getTemperature(),
+                componentTest.getContinuity(),
                 componentTest.getResult(),
                 componentTest.getTestDate(),
                 componentTest.getNotes()
@@ -71,6 +72,7 @@ public class ComponentTestService {
         componentTest.setMeasuredCurrent(componentTestRequestDTO.measuredCurrent());
         componentTest.setMeasuredResistance(componentTestRequestDTO.measuredResistance());
         componentTest.setTemperature(componentTestRequestDTO.temperature());
+        componentTest.setContinuity(componentTestRequestDTO.continuity());
         componentTest.setNotes(componentTestRequestDTO.notes());
         componentTest.setResult(componentTestRequestDTO.result());
 
@@ -93,6 +95,7 @@ public class ComponentTestService {
         componentTest.setMeasuredCurrent(componentTestRequestDTO.measuredCurrent());
         componentTest.setMeasuredResistance(componentTestRequestDTO.measuredResistance());
         componentTest.setTemperature(componentTestRequestDTO.temperature());
+        componentTest.setContinuity(componentTestRequestDTO.continuity());
         componentTest.setResult(componentTestRequestDTO.result());
         componentTest.setNotes(componentTestRequestDTO.notes());
 
@@ -114,12 +117,15 @@ public class ComponentTestService {
     private ComponentTest findComponentTestEntityById(Long componentId) {
         return componentTestRepository.findById(componentId).orElseThrow(() -> new ResourceNotFoundException("Component test not found"));
     }
+
     private Component findComponentEntityById(Long componentId) {
         return componentRepository.findById(componentId).orElseThrow(() -> new ResourceNotFoundException("Component not found"));
     }
+
     private RepairCase findRepairCaseEntityById(Long repairCaseId) {
         return repairCaseRepository.findById(repairCaseId).orElseThrow(() -> new ResourceNotFoundException("RepairCase not found"));
     }
+
     private void validateComponentBelongsToRepairCaseModel(
             RepairCase repairCase,
             Component component

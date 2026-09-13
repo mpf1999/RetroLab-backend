@@ -8,5 +8,6 @@ import java.util.List;
 
 public interface RepairCaseRepository extends JpaRepository<RepairCase, Long> {
     List<RepairCase> findByConsoleConsoleId(Long consoleId);
+
     boolean existsByConsoleConsoleIdAndStatusNot(Long consoleId, RepairStatus status);
 }

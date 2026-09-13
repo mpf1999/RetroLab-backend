@@ -97,7 +97,7 @@ public class PrivUserDetailsServiceTest {
 
         UserDetails result = userDetailsService.loadUserByUsername("charizard@test.com");
 
-        assertEquals("MyEncodedPassword",result.getPassword());
+        assertEquals("MyEncodedPassword", result.getPassword());
 
         verify(userRepository).findByEmailIgnoreCase("charizard@test.com");
     }
@@ -113,7 +113,7 @@ public class PrivUserDetailsServiceTest {
 
         when(userRepository.findByEmailIgnoreCase("MEW@TEST.COM")).thenReturn(Optional.of(user));
 
-        UserDetails result =userDetailsService.loadUserByUsername("MEW@TEST.COM");
+        UserDetails result = userDetailsService.loadUserByUsername("MEW@TEST.COM");
 
         assertEquals("mew@test.com", result.getUsername());
 

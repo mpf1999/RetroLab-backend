@@ -7,8 +7,11 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.web.multipart.MultipartFile;
 import uoc.edu.dto.ConsoleRequestDTO;
 import uoc.edu.dto.ConsoleResponseDTO;
+import uoc.edu.dto.MoneyDTO;
+import uoc.edu.exception.InvalidRequestException;
 import uoc.edu.exception.ResourceAlreadyExistsException;
 import uoc.edu.exception.ResourceInUseException;
 import uoc.edu.exception.ResourceNotFoundException;
@@ -16,6 +19,7 @@ import uoc.edu.model.Condition;
 import uoc.edu.model.Console;
 import uoc.edu.model.ConsoleModel;
 import uoc.edu.model.Manufacturer;
+import uoc.edu.model.Money;
 import uoc.edu.model.RepairStatus;
 import uoc.edu.model.Status;
 import uoc.edu.model.User;
@@ -24,12 +28,14 @@ import uoc.edu.repository.ConsoleRepository;
 import uoc.edu.repository.RepairCaseRepository;
 import uoc.edu.repository.UserRepository;
 import uoc.edu.service.ConsoleService;
+import uoc.edu.service.ImageStorageService;
 
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -46,6 +52,12 @@ class ConsoleServiceTest {
 
     @Mock
     private RepairCaseRepository repairCaseRepository;
+
+    @Mock
+    private ImageStorageService imageStorageService;
+
+    @Mock
+    private MultipartFile image;
 
     @InjectMocks
     private ConsoleService consoleService;
@@ -67,560 +79,1598 @@ class ConsoleServiceTest {
 
     @BeforeEach
     void setUp() {
-        nintendo = createManufacturer(1L, "Nintendo", "JP");
-        sony = createManufacturer(2L, "Sony", "JP");
 
-        gameBoyModel = createConsoleModel(1L, "Game Boy", 1989, nintendo);
-        playStationModel = createConsoleModel(2L, "PlayStation", 1994, sony);
+        nintendo = createManufacturer(
+                1L,
+                "Nintendo",
+                "JP"
+        );
 
-        owner = createUser(1L);
-        secondOwner = createUser(2L);
+        sony = createManufacturer(
+                2L,
+                "Sony",
+                "JP"
+        );
+
+        gameBoyModel = createConsoleModel(
+                1L,
+                "Game Boy",
+                1989,
+                nintendo
+        );
+
+        playStationModel = createConsoleModel(
+                2L,
+                "PlayStation",
+                1994,
+                sony
+        );
+
+        owner = createUser(
+                1L,
+                "Manuel"
+        );
+
+        secondOwner = createUser(
+                2L,
+                "Laura"
+        );
 
         condition = Condition.EXCELLENT;
         status = Status.AVAILABLE;
 
-        gameBoy = createConsole(1L, owner, gameBoyModel, "GB-001", "JP", "Grey", condition, new BigDecimal("120.00"), status, "Original Game Boy");
+        gameBoy = createConsole(
+                1L,
+                owner,
+                null,
+                gameBoyModel,
+                "GB-001",
+                "JP",
+                "Grey",
+                condition,
+                money("120.00", "EUR"),
+                status,
+                "Original Game Boy",
+                null
+        );
 
-        playStation = createConsole(2L, secondOwner, playStationModel, "PS-001", "JP", "Grey", condition, new BigDecimal("150.00"), status, "Original PlayStation");
+        playStation = createConsole(
+                2L,
+                secondOwner,
+                null,
+                playStationModel,
+                "PS-001",
+                "JP",
+                "Grey",
+                condition,
+                money("150.00", "EUR"),
+                status,
+                "Original PlayStation",
+                null
+        );
     }
-
-    // get all consoles test
 
     @Test
     void getAllConsolesReturnsConsoles() {
-        when(consoleRepository.findAll()).thenReturn(List.of(gameBoy, playStation));
 
-        List<ConsoleResponseDTO> result = consoleService.getAllConsoles();
+        when(consoleRepository.findAll())
+                .thenReturn(
+                        List.of(
+                                gameBoy,
+                                playStation
+                        )
+                );
+
+        List<ConsoleResponseDTO> result =
+                consoleService.getAllConsoles();
 
         assertNotNull(result);
         assertEquals(2, result.size());
 
         assertAll(
-                () -> assertEquals(1L, result.getFirst().consoleId()),
-                () -> assertEquals(1L, result.getFirst().ownerId()),
-                () -> assertEquals(1L, result.getFirst().consoleModelId()),
-                () -> assertEquals("Game Boy", result.getFirst().consoleModelName()),
-                () -> assertEquals("Nintendo", result.getFirst().manufacturerName()),
-                () -> assertEquals("GB-001", result.getFirst().serialNumber()),
-                () -> assertEquals("JP", result.getFirst().region()),
-                () -> assertEquals("Grey", result.getFirst().color()),
-                () -> assertEquals(condition, result.getFirst().condition()),
-                () -> assertEquals(new BigDecimal("120.00"), result.getFirst().estimatedValue()),
-                () -> assertEquals(status, result.getFirst().status()),
-                () -> assertEquals("Original Game Boy", result.getFirst().notes())
+                () -> assertEquals(
+                        1L,
+                        result.getFirst().consoleId()
+                ),
+                () -> assertEquals(
+                        1L,
+                        result.getFirst().ownerId()
+                ),
+                () -> assertEquals(
+                        "Manuel",
+                        result.getFirst().ownerName()
+                ),
+                () -> assertEquals(
+                        1L,
+                        result.getFirst().consoleModelId()
+                ),
+                () -> assertEquals(
+                        "Game Boy",
+                        result.getFirst().consoleModelName()
+                ),
+                () -> assertEquals(
+                        "Nintendo",
+                        result.getFirst().manufacturerName()
+                ),
+                () -> assertEquals(
+                        "GB-001",
+                        result.getFirst().serialNumber()
+                ),
+                () -> assertEquals(
+                        "JP",
+                        result.getFirst().region()
+                ),
+                () -> assertEquals(
+                        "Grey",
+                        result.getFirst().color()
+                ),
+                () -> assertEquals(
+                        condition,
+                        result.getFirst().condition()
+                ),
+                () -> assertEquals(
+                        moneyDTO("120.00", "EUR"),
+                        result.getFirst().estimatedValue()
+                ),
+                () -> assertEquals(
+                        status,
+                        result.getFirst().status()
+                ),
+                () -> assertEquals(
+                        "Original Game Boy",
+                        result.getFirst().notes()
+                ),
+                () -> assertNull(
+                        result.getFirst().imageUrl()
+                )
         );
 
         assertAll(
-                () -> assertEquals(2L, result.get(1).consoleId()),
-                () -> assertEquals(2L, result.get(1).ownerId()),
-                () -> assertEquals(2L, result.get(1).consoleModelId()),
-                () -> assertEquals("PlayStation", result.get(1).consoleModelName()),
-                () -> assertEquals("Sony", result.get(1).manufacturerName()),
-                () -> assertEquals("PS-001", result.get(1).serialNumber()),
-                () -> assertEquals("JP", result.get(1).region()),
-                () -> assertEquals("Grey", result.get(1).color()),
-                () -> assertEquals(condition, result.get(1).condition()),
-                () -> assertEquals(new BigDecimal("150.00"), result.get(1).estimatedValue()),
-                () -> assertEquals(status, result.get(1).status()),
-                () -> assertEquals("Original PlayStation", result.get(1).notes())
+                () -> assertEquals(
+                        2L,
+                        result.get(1).consoleId()
+                ),
+                () -> assertEquals(
+                        2L,
+                        result.get(1).ownerId()
+                ),
+                () -> assertEquals(
+                        "Laura",
+                        result.get(1).ownerName()
+                ),
+                () -> assertEquals(
+                        2L,
+                        result.get(1).consoleModelId()
+                ),
+                () -> assertEquals(
+                        "PlayStation",
+                        result.get(1).consoleModelName()
+                ),
+                () -> assertEquals(
+                        "Sony",
+                        result.get(1).manufacturerName()
+                ),
+                () -> assertEquals(
+                        "PS-001",
+                        result.get(1).serialNumber()
+                ),
+                () -> assertEquals(
+                        moneyDTO("150.00", "EUR"),
+                        result.get(1).estimatedValue()
+                )
         );
 
         verify(consoleRepository).findAll();
-
-        verifyNoMoreInteractions(consoleRepository);
-        verifyNoInteractions(consoleModelRepository, userRepository, repairCaseRepository);
     }
 
     @Test
     void getAllConsolesReturnsEmptyList() {
-        when(consoleRepository.findAll()).thenReturn(List.of());
 
-        List<ConsoleResponseDTO> result = consoleService.getAllConsoles();
+        when(consoleRepository.findAll())
+                .thenReturn(List.of());
+
+        List<ConsoleResponseDTO> result =
+                consoleService.getAllConsoles();
 
         assertNotNull(result);
         assertTrue(result.isEmpty());
 
         verify(consoleRepository).findAll();
-
-        verifyNoMoreInteractions(consoleRepository);
-        verifyNoInteractions(consoleModelRepository, userRepository, repairCaseRepository);
     }
-
-    // get console by id test
 
     @Test
     void getConsoleByIdReturnsConsole() {
-        when(consoleRepository.findById(1L)).thenReturn(Optional.of(gameBoy));
 
-        ConsoleResponseDTO result = consoleService.getConsoleById(1L);
+        when(consoleRepository.findById(1L))
+                .thenReturn(Optional.of(gameBoy));
+
+        ConsoleResponseDTO result =
+                consoleService.getConsoleById(1L);
 
         assertNotNull(result);
 
         assertAll(
-                () -> assertEquals(1L, result.consoleId()),
-                () -> assertEquals(1L, result.ownerId()),
-                () -> assertEquals(1L, result.consoleModelId()),
-                () -> assertEquals("Game Boy", result.consoleModelName()),
-                () -> assertEquals("Nintendo", result.manufacturerName()),
-                () -> assertEquals("GB-001", result.serialNumber()),
-                () -> assertEquals("JP", result.region()),
-                () -> assertEquals("Grey", result.color()),
-                () -> assertEquals(condition, result.condition()),
-                () -> assertEquals(new BigDecimal("120.00"), result.estimatedValue()),
-                () -> assertEquals(status, result.status()),
-                () -> assertEquals("Original Game Boy", result.notes())
+                () -> assertEquals(
+                        1L,
+                        result.consoleId()
+                ),
+                () -> assertEquals(
+                        1L,
+                        result.ownerId()
+                ),
+                () -> assertEquals(
+                        "Manuel",
+                        result.ownerName()
+                ),
+                () -> assertEquals(
+                        1L,
+                        result.consoleModelId()
+                ),
+                () -> assertEquals(
+                        "Game Boy",
+                        result.consoleModelName()
+                ),
+                () -> assertEquals(
+                        "Nintendo",
+                        result.manufacturerName()
+                ),
+                () -> assertEquals(
+                        "GB-001",
+                        result.serialNumber()
+                ),
+                () -> assertEquals(
+                        moneyDTO("120.00", "EUR"),
+                        result.estimatedValue()
+                )
         );
 
-        verify(consoleRepository).findById(1L);
-
-        verifyNoMoreInteractions(consoleRepository);
-        verifyNoInteractions(consoleModelRepository, userRepository, repairCaseRepository);
+        verify(consoleRepository)
+                .findById(1L);
     }
 
     @Test
     void getConsoleByIdThrowsExceptionWhenConsoleDoesNotExist() {
-        when(consoleRepository.findById(99L)).thenReturn(Optional.empty());
-        ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class, () -> consoleService.getConsoleById(99L));
 
-        assertEquals("Console not found", exception.getMessage());
+        when(consoleRepository.findById(99L))
+                .thenReturn(Optional.empty());
 
-        verify(consoleRepository).findById(99L);
+        ResourceNotFoundException exception =
+                assertThrows(
+                        ResourceNotFoundException.class,
+                        () -> consoleService
+                                .getConsoleById(99L)
+                );
 
-        verifyNoMoreInteractions(consoleRepository);
-        verifyNoInteractions(consoleModelRepository, userRepository, repairCaseRepository);
+        assertEquals(
+                "Console not found",
+                exception.getMessage()
+        );
+
+        verify(consoleRepository)
+                .findById(99L);
     }
-
-    // add console test
 
     @Test
     void addConsoleReturnsCreatedConsole() {
-        ConsoleRequestDTO request = new ConsoleRequestDTO(1L, 1L, "GB-002", "JP", "Black", new BigDecimal("140.00"), condition, status, "Modified Game Boy");
 
-        when(consoleModelRepository.findById(1L)).thenReturn(Optional.of(gameBoyModel));
-        when(userRepository.findById(1L)).thenReturn(Optional.of(owner));
-        when(consoleRepository.findBySerialNumber("GB-002")).thenReturn(Optional.empty());
+        ConsoleRequestDTO request =
+                new ConsoleRequestDTO(
+                        1L,
+                        null,
+                        1L,
+                        "GB-002",
+                        "JP",
+                        "Black",
+                        moneyDTO("140.00", "EUR"),
+                        condition,
+                        status,
+                        "Modified Game Boy"
+                );
 
-        when(consoleRepository.save(any(Console.class))).thenAnswer(invocation -> {Console console = invocation.getArgument(0);console.setConsoleId(3L);return console;});
+        when(consoleModelRepository.findById(1L))
+                .thenReturn(
+                        Optional.of(gameBoyModel)
+                );
 
-        ConsoleResponseDTO result = consoleService.addConsole(request);
+        when(consoleRepository
+                .findBySerialNumber("GB-002"))
+                .thenReturn(Optional.empty());
+
+        when(userRepository.findById(1L))
+                .thenReturn(
+                        Optional.of(owner)
+                );
+
+        when(consoleRepository.save(
+                any(Console.class)
+        )).thenAnswer(invocation -> {
+
+            Console console =
+                    invocation.getArgument(0);
+
+            console.setConsoleId(3L);
+
+            return console;
+        });
+
+        ConsoleResponseDTO result =
+                consoleService.addConsole(request);
 
         assertNotNull(result);
+
         assertAll(
-                () -> assertEquals(3L, result.consoleId()),
-                () -> assertEquals(1L, result.ownerId()),
-                () -> assertEquals(1L, result.consoleModelId()),
-                () -> assertEquals("Game Boy", result.consoleModelName()),
-                () -> assertEquals("Nintendo", result.manufacturerName()),
-                () -> assertEquals("GB-002", result.serialNumber()),
-                () -> assertEquals("JP", result.region()),
-                () -> assertEquals("Black", result.color()),
-                () -> assertEquals(condition, result.condition()),
-                () -> assertEquals(new BigDecimal("140.00"), result.estimatedValue()),
-                () -> assertEquals(status, result.status()),
-                () -> assertEquals("Modified Game Boy", result.notes())
+                () -> assertEquals(
+                        3L,
+                        result.consoleId()
+                ),
+                () -> assertEquals(
+                        1L,
+                        result.ownerId()
+                ),
+                () -> assertEquals(
+                        "Manuel",
+                        result.ownerName()
+                ),
+                () -> assertEquals(
+                        "GB-002",
+                        result.serialNumber()
+                ),
+                () -> assertEquals(
+                        "Black",
+                        result.color()
+                ),
+                () -> assertEquals(
+                        moneyDTO("140.00", "EUR"),
+                        result.estimatedValue()
+                ),
+                () -> assertEquals(
+                        "Modified Game Boy",
+                        result.notes()
+                ),
+                () -> assertNull(
+                        result.imageUrl()
+                )
         );
 
-        verify(consoleModelRepository).findById(1L);
-        verify(userRepository).findById(1L);
-        verify(consoleRepository).findBySerialNumber("GB-002");
-        verify(consoleRepository).save(any(Console.class));
+        verify(consoleModelRepository)
+                .findById(1L);
 
-        verifyNoMoreInteractions(consoleRepository);
-        verifyNoMoreInteractions(consoleModelRepository);
-        verifyNoMoreInteractions(userRepository);
-        verifyNoInteractions(repairCaseRepository);
+        verify(consoleRepository)
+                .findBySerialNumber("GB-002");
+
+        verify(userRepository)
+                .findById(1L);
+
+        verify(consoleRepository)
+                .save(any(Console.class));
     }
 
     @Test
     void addConsoleSavesCorrectData() {
-        ConsoleRequestDTO request = new ConsoleRequestDTO(1L, 1L, "GB-003", "JP", "Yellow", new BigDecimal("160.00"), condition, status, "Game Boy with IPS screen");
 
-        when(consoleModelRepository.findById(1L)).thenReturn(Optional.of(gameBoyModel));
-        when(userRepository.findById(1L)).thenReturn(Optional.of(owner));
-        when(consoleRepository.findBySerialNumber("GB-003")).thenReturn(Optional.empty());
-        when(consoleRepository.save(any(Console.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        ConsoleRequestDTO request =
+                new ConsoleRequestDTO(
+                        1L,
+                        null,
+                        1L,
+                        " GB-003 ",
+                        "JP",
+                        " Yellow ",
+                        moneyDTO("160.00", "EUR"),
+                        condition,
+                        status,
+                        " Game Boy with IPS screen "
+                );
 
-        ArgumentCaptor<Console> captor = ArgumentCaptor.forClass(Console.class);
+        when(consoleModelRepository.findById(1L))
+                .thenReturn(
+                        Optional.of(gameBoyModel)
+                );
+
+        when(consoleRepository
+                .findBySerialNumber("GB-003"))
+                .thenReturn(Optional.empty());
+
+        when(userRepository.findById(1L))
+                .thenReturn(
+                        Optional.of(owner)
+                );
+
+        when(consoleRepository.save(
+                any(Console.class)
+        )).thenAnswer(
+                invocation ->
+                        invocation.getArgument(0)
+        );
+
+        ArgumentCaptor<Console> captor =
+                ArgumentCaptor.forClass(
+                        Console.class
+                );
 
         consoleService.addConsole(request);
 
-        verify(consoleRepository).save(captor.capture());
+        verify(consoleRepository)
+                .save(captor.capture());
 
-        Console savedConsole = captor.getValue();
+        Console savedConsole =
+                captor.getValue();
 
         assertNotNull(savedConsole);
 
         assertAll(
-                () -> assertNull(savedConsole.getConsoleId()),
-                () -> assertSame(owner, savedConsole.getOwner()),
-                () -> assertSame(gameBoyModel, savedConsole.getConsoleModel()),
-                () -> assertEquals("GB-003", savedConsole.getSerialNumber()),
-                () -> assertEquals("JP", savedConsole.getRegion()),
-                () -> assertEquals("Yellow", savedConsole.getColor()),
-                () -> assertEquals(condition, savedConsole.getCondition()),
-                () -> assertEquals(new BigDecimal("160.00"), savedConsole.getEstimatedValue()),
-                () -> assertEquals(status, savedConsole.getStatus()),
-                () -> assertEquals("Game Boy with IPS screen", savedConsole.getNotes())
+                () -> assertNull(
+                        savedConsole.getConsoleId()
+                ),
+                () -> assertSame(
+                        owner,
+                        savedConsole.getOwner()
+                ),
+                () -> assertNull(
+                        savedConsole.getExternalOwnerName()
+                ),
+                () -> assertSame(
+                        gameBoyModel,
+                        savedConsole.getConsoleModel()
+                ),
+                () -> assertEquals(
+                        "GB-003",
+                        savedConsole.getSerialNumber()
+                ),
+                () -> assertEquals(
+                        "JP",
+                        savedConsole.getRegion()
+                ),
+                () -> assertEquals(
+                        "Yellow",
+                        savedConsole.getColor()
+                ),
+                () -> assertEquals(
+                        condition,
+                        savedConsole.getCondition()
+                ),
+                () -> assertEquals(
+                        money("160.00", "EUR"),
+                        savedConsole.getEstimatedValue()
+                ),
+                () -> assertEquals(
+                        status,
+                        savedConsole.getStatus()
+                ),
+                () -> assertEquals(
+                        "Game Boy with IPS screen",
+                        savedConsole.getNotes()
+                )
+        );
+    }
+
+    @Test
+    void addConsoleWithExternalOwnerSavesExternalOwner() {
+
+        ConsoleRequestDTO request =
+                new ConsoleRequestDTO(
+                        null,
+                        " External Client ",
+                        1L,
+                        "GB-004",
+                        "JP",
+                        "Grey",
+                        moneyDTO("100.00", "EUR"),
+                        condition,
+                        status,
+                        null
+                );
+
+        when(consoleModelRepository.findById(1L))
+                .thenReturn(
+                        Optional.of(gameBoyModel)
+                );
+
+        when(consoleRepository
+                .findBySerialNumber("GB-004"))
+                .thenReturn(Optional.empty());
+
+        when(consoleRepository.save(
+                any(Console.class)
+        )).thenAnswer(
+                invocation ->
+                        invocation.getArgument(0)
         );
 
-        verify(consoleModelRepository).findById(1L);
-        verify(userRepository).findById(1L);
-        verify(consoleRepository).findBySerialNumber("GB-003");
+        ArgumentCaptor<Console> captor =
+                ArgumentCaptor.forClass(
+                        Console.class
+                );
 
-        verifyNoMoreInteractions(consoleRepository);
-        verifyNoMoreInteractions(consoleModelRepository);
-        verifyNoMoreInteractions(userRepository);
-        verifyNoInteractions(repairCaseRepository);
+        consoleService.addConsole(request);
+
+        verify(consoleRepository)
+                .save(captor.capture());
+
+        Console savedConsole =
+                captor.getValue();
+
+        assertAll(
+                () -> assertNull(
+                        savedConsole.getOwner()
+                ),
+                () -> assertEquals(
+                        "External Client",
+                        savedConsole.getExternalOwnerName()
+                )
+        );
+
+        verifyNoInteractions(userRepository);
+    }
+
+    @Test
+    void addConsoleThrowsExceptionWhenBothOwnersAreProvided() {
+
+        ConsoleRequestDTO request =
+                new ConsoleRequestDTO(
+                        1L,
+                        "External Client",
+                        1L,
+                        "GB-004",
+                        "JP",
+                        "Grey",
+                        moneyDTO("100.00", "EUR"),
+                        condition,
+                        status,
+                        null
+                );
+
+        when(consoleModelRepository.findById(1L))
+                .thenReturn(
+                        Optional.of(gameBoyModel)
+                );
+
+        when(consoleRepository
+                .findBySerialNumber("GB-004"))
+                .thenReturn(Optional.empty());
+
+        InvalidRequestException exception =
+                assertThrows(
+                        InvalidRequestException.class,
+                        () -> consoleService
+                                .addConsole(request)
+                );
+
+        assertEquals(
+                "Provide ownerId for a team member or ownerName for a client, not both",
+                exception.getMessage()
+        );
+
+        verifyNoInteractions(userRepository);
+    }
+
+    @Test
+    void addConsoleThrowsExceptionWhenNoOwnerIsProvided() {
+
+        ConsoleRequestDTO request =
+                new ConsoleRequestDTO(
+                        null,
+                        null,
+                        1L,
+                        "GB-004",
+                        "JP",
+                        "Grey",
+                        moneyDTO("100.00", "EUR"),
+                        condition,
+                        status,
+                        null
+                );
+
+        when(consoleModelRepository.findById(1L))
+                .thenReturn(
+                        Optional.of(gameBoyModel)
+                );
+
+        when(consoleRepository
+                .findBySerialNumber("GB-004"))
+                .thenReturn(Optional.empty());
+
+        InvalidRequestException exception =
+                assertThrows(
+                        InvalidRequestException.class,
+                        () -> consoleService
+                                .addConsole(request)
+                );
+
+        assertEquals(
+                "An owner must be provided",
+                exception.getMessage()
+        );
+
+        verifyNoInteractions(userRepository);
     }
 
     @Test
     void addConsoleThrowsExceptionWhenConsoleModelDoesNotExist() {
-        ConsoleRequestDTO request = new ConsoleRequestDTO(1L, 99L, "GB-002", "JP", "Black", new BigDecimal("140.00"), condition, status, "Modified Game Boy");
 
-        when(consoleModelRepository.findById(99L)).thenReturn(Optional.empty());
+        ConsoleRequestDTO request =
+                new ConsoleRequestDTO(
+                        1L,
+                        null,
+                        99L,
+                        "GB-002",
+                        "JP",
+                        "Black",
+                        moneyDTO("140.00", "EUR"),
+                        condition,
+                        status,
+                        "Modified Game Boy"
+                );
 
-        ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class, () -> consoleService.addConsole(request));
+        when(consoleModelRepository.findById(99L))
+                .thenReturn(Optional.empty());
 
-        assertEquals("Console model not found", exception.getMessage());
+        ResourceNotFoundException exception =
+                assertThrows(
+                        ResourceNotFoundException.class,
+                        () -> consoleService
+                                .addConsole(request)
+                );
 
-        verify(consoleModelRepository).findById(99L);
-        verifyNoMoreInteractions(consoleModelRepository);
-        verifyNoInteractions(consoleRepository, userRepository, repairCaseRepository);
+        assertEquals(
+                "Console model not found",
+                exception.getMessage()
+        );
+
+        verify(consoleModelRepository)
+                .findById(99L);
+
+        verifyNoInteractions(userRepository);
     }
 
     @Test
     void addConsoleThrowsExceptionWhenOwnerDoesNotExist() {
-        ConsoleRequestDTO request = new ConsoleRequestDTO(99L, 1L, "GB-002", "JP", "Black", new BigDecimal("140.00"), condition, status, "Modified Game Boy");
 
-        when(consoleModelRepository.findById(1L)).thenReturn(Optional.of(gameBoyModel));
-        when(userRepository.findById(99L)).thenReturn(Optional.empty());
+        ConsoleRequestDTO request =
+                new ConsoleRequestDTO(
+                        99L,
+                        null,
+                        1L,
+                        "GB-002",
+                        "JP",
+                        "Black",
+                        moneyDTO("140.00", "EUR"),
+                        condition,
+                        status,
+                        "Modified Game Boy"
+                );
 
-        ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class, () -> consoleService.addConsole(request));
+        when(consoleModelRepository.findById(1L))
+                .thenReturn(
+                        Optional.of(gameBoyModel)
+                );
 
-        assertEquals("User not found", exception.getMessage());
+        when(consoleRepository
+                .findBySerialNumber("GB-002"))
+                .thenReturn(Optional.empty());
 
-        verify(consoleModelRepository).findById(1L);
-        verify(userRepository).findById(99L);
+        when(userRepository.findById(99L))
+                .thenReturn(Optional.empty());
 
-        verifyNoMoreInteractions(consoleModelRepository);
-        verifyNoMoreInteractions(userRepository);
-        verifyNoInteractions(consoleRepository, repairCaseRepository);
+        ResourceNotFoundException exception =
+                assertThrows(
+                        ResourceNotFoundException.class,
+                        () -> consoleService
+                                .addConsole(request)
+                );
+
+        assertEquals(
+                "User with id 99 not found",
+                exception.getMessage()
+        );
+
+        verify(userRepository)
+                .findById(99L);
     }
 
     @Test
     void addConsoleThrowsExceptionWhenSerialNumberAlreadyExists() {
-        ConsoleRequestDTO request = new ConsoleRequestDTO(1L, 1L, "GB-001", "JP", "Black", new BigDecimal("140.00"), condition, status, "Modified Game Boy");
 
-        when(consoleModelRepository.findById(1L)).thenReturn(Optional.of(gameBoyModel));
-        when(userRepository.findById(1L)).thenReturn(Optional.of(owner));
-        when(consoleRepository.findBySerialNumber("GB-001")).thenReturn(Optional.of(gameBoy));
+        ConsoleRequestDTO request =
+                new ConsoleRequestDTO(
+                        1L,
+                        null,
+                        1L,
+                        "GB-001",
+                        "JP",
+                        "Black",
+                        moneyDTO("140.00", "EUR"),
+                        condition,
+                        status,
+                        "Modified Game Boy"
+                );
 
-        ResourceAlreadyExistsException exception = assertThrows(ResourceAlreadyExistsException.class, () -> consoleService.addConsole(request));
+        when(consoleModelRepository.findById(1L))
+                .thenReturn(
+                        Optional.of(gameBoyModel)
+                );
 
-        assertEquals("Console with serial number GB-001 already exists", exception.getMessage());
+        when(consoleRepository
+                .findBySerialNumber("GB-001"))
+                .thenReturn(
+                        Optional.of(gameBoy)
+                );
 
-        verify(consoleModelRepository).findById(1L);
-        verify(userRepository).findById(1L);
-        verify(consoleRepository).findBySerialNumber("GB-001");
-        verify(consoleRepository, never()).save(any(Console.class));
+        ResourceAlreadyExistsException exception =
+                assertThrows(
+                        ResourceAlreadyExistsException.class,
+                        () -> consoleService
+                                .addConsole(request)
+                );
 
-        verifyNoMoreInteractions(consoleRepository);
-        verifyNoMoreInteractions(consoleModelRepository);
-        verifyNoMoreInteractions(userRepository);
-        verifyNoInteractions(repairCaseRepository);
+        assertEquals(
+                "Console with serial number GB-001 already exists",
+                exception.getMessage()
+        );
+
+        verify(
+                consoleRepository,
+                never()
+        ).save(any(Console.class));
+
+        verifyNoInteractions(userRepository);
     }
 
-    //update console test
     @Test
     void updateConsoleReturnsUpdatedConsole() {
-        ConsoleRequestDTO request = new ConsoleRequestDTO(2L, 2L, "PS-002", "US", "White", new BigDecimal("200.00"), condition, status, "Updated console");
 
-        when(consoleRepository.findById(1L)).thenReturn(Optional.of(gameBoy));
-        when(consoleModelRepository.findById(2L)).thenReturn(Optional.of(playStationModel));
-        when(userRepository.findById(2L)).thenReturn(Optional.of(secondOwner));
-        when(consoleRepository.findBySerialNumber("PS-002")).thenReturn(Optional.empty());
-        when(consoleRepository.save(gameBoy)).thenReturn(gameBoy);
+        ConsoleRequestDTO request =
+                new ConsoleRequestDTO(
+                        2L,
+                        null,
+                        2L,
+                        "PS-002",
+                        "US",
+                        "White",
+                        moneyDTO("200.00", "USD"),
+                        condition,
+                        status,
+                        "Updated console"
+                );
 
-        ConsoleResponseDTO result = consoleService.updateConsole(1L, request);
+        when(consoleRepository.findById(1L))
+                .thenReturn(
+                        Optional.of(gameBoy)
+                );
+
+        when(consoleModelRepository.findById(2L))
+                .thenReturn(
+                        Optional.of(playStationModel)
+                );
+
+        when(consoleRepository
+                .findBySerialNumber("PS-002"))
+                .thenReturn(Optional.empty());
+
+        when(userRepository.findById(2L))
+                .thenReturn(
+                        Optional.of(secondOwner)
+                );
+
+        when(consoleRepository.save(gameBoy))
+                .thenReturn(gameBoy);
+
+        ConsoleResponseDTO result =
+                consoleService.updateConsole(
+                        1L,
+                        request
+                );
 
         assertNotNull(result);
 
         assertAll(
-                () -> assertEquals(1L, result.consoleId()),
-                () -> assertEquals(2L, result.ownerId()),
-                () -> assertEquals(2L, result.consoleModelId()),
-                () -> assertEquals("PlayStation", result.consoleModelName()),
-                () -> assertEquals("Sony", result.manufacturerName()),
-                () -> assertEquals("PS-002", result.serialNumber()),
-                () -> assertEquals("US", result.region()),
-                () -> assertEquals("White", result.color()),
-                () -> assertEquals(new BigDecimal("200.00"), result.estimatedValue()),
-                () -> assertEquals(condition, result.condition()),
-                () -> assertEquals(status, result.status()),
-                () -> assertEquals("Updated console", result.notes())
+                () -> assertEquals(
+                        1L,
+                        result.consoleId()
+                ),
+                () -> assertEquals(
+                        2L,
+                        result.ownerId()
+                ),
+                () -> assertEquals(
+                        "Laura",
+                        result.ownerName()
+                ),
+                () -> assertEquals(
+                        2L,
+                        result.consoleModelId()
+                ),
+                () -> assertEquals(
+                        "PlayStation",
+                        result.consoleModelName()
+                ),
+                () -> assertEquals(
+                        "Sony",
+                        result.manufacturerName()
+                ),
+                () -> assertEquals(
+                        "PS-002",
+                        result.serialNumber()
+                ),
+                () -> assertEquals(
+                        "US",
+                        result.region()
+                ),
+                () -> assertEquals(
+                        "White",
+                        result.color()
+                ),
+                () -> assertEquals(
+                        moneyDTO("200.00", "USD"),
+                        result.estimatedValue()
+                ),
+                () -> assertEquals(
+                        "Updated console",
+                        result.notes()
+                )
         );
-
-        verify(consoleRepository).findById(1L);
-        verify(consoleModelRepository).findById(2L);
-        verify(userRepository).findById(2L);
-        verify(consoleRepository).findBySerialNumber("PS-002");
-        verify(consoleRepository).save(gameBoy);
-
-        verifyNoMoreInteractions(consoleRepository);
-        verifyNoMoreInteractions(consoleModelRepository);
-        verifyNoMoreInteractions(userRepository);
-        verifyNoInteractions(repairCaseRepository);
     }
 
     @Test
     void updateConsoleSavesCorrectData() {
-        ConsoleRequestDTO request = new ConsoleRequestDTO(2L, 2L, "PS-003", "US", "Black", new BigDecimal("230.00"), condition, status, "Console after repair");
 
-        when(consoleRepository.findById(1L)).thenReturn(Optional.of(gameBoy));
-        when(consoleModelRepository.findById(2L)).thenReturn(Optional.of(playStationModel));
-        when(userRepository.findById(2L)).thenReturn(Optional.of(secondOwner));
-        when(consoleRepository.findBySerialNumber("PS-003")).thenReturn(Optional.empty());
-        when(consoleRepository.save(any(Console.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        ConsoleRequestDTO request =
+                new ConsoleRequestDTO(
+                        2L,
+                        null,
+                        2L,
+                        " PS-003 ",
+                        "US",
+                        " Black ",
+                        moneyDTO("230.00", "USD"),
+                        condition,
+                        status,
+                        " Console after repair "
+                );
 
-        ArgumentCaptor<Console> captor = ArgumentCaptor.forClass(Console.class);
-        consoleService.updateConsole(1L, request);
+        when(consoleRepository.findById(1L))
+                .thenReturn(
+                        Optional.of(gameBoy)
+                );
 
-        verify(consoleRepository).save(captor.capture());
+        when(consoleModelRepository.findById(2L))
+                .thenReturn(
+                        Optional.of(playStationModel)
+                );
 
-        Console updatedConsole = captor.getValue();
+        when(consoleRepository
+                .findBySerialNumber("PS-003"))
+                .thenReturn(Optional.empty());
 
-        assertNotNull(updatedConsole);
+        when(userRepository.findById(2L))
+                .thenReturn(
+                        Optional.of(secondOwner)
+                );
 
-        assertAll(
-                () -> assertSame(gameBoy, updatedConsole),
-                () -> assertEquals(1L, updatedConsole.getConsoleId()),
-                () -> assertSame(secondOwner, updatedConsole.getOwner()),
-                () -> assertSame(playStationModel, updatedConsole.getConsoleModel()),
-                () -> assertEquals("PS-003", updatedConsole.getSerialNumber()),
-                () -> assertEquals("US", updatedConsole.getRegion()),
-                () -> assertEquals("Black", updatedConsole.getColor()),
-                () -> assertEquals(new BigDecimal("230.00"), updatedConsole.getEstimatedValue()),
-                () -> assertEquals(condition, updatedConsole.getCondition()),
-                () -> assertEquals(status, updatedConsole.getStatus()),
-                () -> assertEquals("Console after repair", updatedConsole.getNotes())
+        when(consoleRepository.save(
+                any(Console.class)
+        )).thenAnswer(
+                invocation ->
+                        invocation.getArgument(0)
         );
 
-        verify(consoleRepository).findById(1L);
-        verify(consoleModelRepository).findById(2L);
-        verify(userRepository).findById(2L);
-        verify(consoleRepository).findBySerialNumber("PS-003");
+        ArgumentCaptor<Console> captor =
+                ArgumentCaptor.forClass(
+                        Console.class
+                );
 
-        verifyNoMoreInteractions(consoleRepository);
-        verifyNoMoreInteractions(consoleModelRepository);
-        verifyNoMoreInteractions(userRepository);
-        verifyNoInteractions(repairCaseRepository);
+        consoleService.updateConsole(
+                1L,
+                request
+        );
+
+        verify(consoleRepository)
+                .save(captor.capture());
+
+        Console updatedConsole =
+                captor.getValue();
+
+        assertAll(
+                () -> assertSame(
+                        gameBoy,
+                        updatedConsole
+                ),
+                () -> assertSame(
+                        secondOwner,
+                        updatedConsole.getOwner()
+                ),
+                () -> assertNull(
+                        updatedConsole.getExternalOwnerName()
+                ),
+                () -> assertSame(
+                        playStationModel,
+                        updatedConsole.getConsoleModel()
+                ),
+                () -> assertEquals(
+                        "PS-003",
+                        updatedConsole.getSerialNumber()
+                ),
+                () -> assertEquals(
+                        "US",
+                        updatedConsole.getRegion()
+                ),
+                () -> assertEquals(
+                        "Black",
+                        updatedConsole.getColor()
+                ),
+                () -> assertEquals(
+                        money("230.00", "USD"),
+                        updatedConsole.getEstimatedValue()
+                ),
+                () -> assertEquals(
+                        "Console after repair",
+                        updatedConsole.getNotes()
+                )
+        );
     }
 
     @Test
     void updateConsoleAllowsKeepingCurrentSerialNumber() {
-        ConsoleRequestDTO request = new ConsoleRequestDTO(1L, 1L, "GB-001", "JP", "Black", new BigDecimal("180.00"), condition, status, "Updated Game Boy");
 
-        when(consoleRepository.findById(1L)).thenReturn(Optional.of(gameBoy));
-        when(consoleModelRepository.findById(1L)).thenReturn(Optional.of(gameBoyModel));
-        when(userRepository.findById(1L)).thenReturn(Optional.of(owner));
-        when(consoleRepository.findBySerialNumber("GB-001")).thenReturn(Optional.of(gameBoy));
-        when(consoleRepository.save(gameBoy)).thenReturn(gameBoy);
+        ConsoleRequestDTO request =
+                new ConsoleRequestDTO(
+                        1L,
+                        null,
+                        1L,
+                        "GB-001",
+                        "JP",
+                        "Black",
+                        moneyDTO("180.00", "EUR"),
+                        condition,
+                        status,
+                        "Updated Game Boy"
+                );
 
-        ConsoleResponseDTO result = consoleService.updateConsole(1L, request);
+        when(consoleRepository.findById(1L))
+                .thenReturn(
+                        Optional.of(gameBoy)
+                );
+
+        when(consoleModelRepository.findById(1L))
+                .thenReturn(
+                        Optional.of(gameBoyModel)
+                );
+
+        when(consoleRepository
+                .findBySerialNumber("GB-001"))
+                .thenReturn(
+                        Optional.of(gameBoy)
+                );
+
+        when(userRepository.findById(1L))
+                .thenReturn(
+                        Optional.of(owner)
+                );
+
+        when(consoleRepository.save(gameBoy))
+                .thenReturn(gameBoy);
+
+        ConsoleResponseDTO result =
+                consoleService.updateConsole(
+                        1L,
+                        request
+                );
 
         assertNotNull(result);
-        assertAll(
-                () -> assertEquals(1L, result.consoleId()),
-                () -> assertEquals("GB-001", result.serialNumber()),
-                () -> assertEquals("Black", result.color()),
-                () -> assertEquals(new BigDecimal("180.00"), result.estimatedValue()),
-                () -> assertEquals("Updated Game Boy", result.notes())
+
+        assertEquals(
+                "GB-001",
+                result.serialNumber()
         );
 
-        verify(consoleRepository).findById(1L);
-        verify(consoleModelRepository).findById(1L);
-        verify(userRepository).findById(1L);
-        verify(consoleRepository).findBySerialNumber("GB-001");
-        verify(consoleRepository).save(gameBoy);
-
-        verifyNoMoreInteractions(consoleRepository);
-        verifyNoMoreInteractions(consoleModelRepository);
-        verifyNoMoreInteractions(userRepository);
-        verifyNoInteractions(repairCaseRepository);
+        assertEquals(
+                moneyDTO("180.00", "EUR"),
+                result.estimatedValue()
+        );
     }
 
     @Test
     void updateConsoleThrowsExceptionWhenSerialNumberBelongsToAnotherConsole() {
-        ConsoleRequestDTO request = new ConsoleRequestDTO(1L, 1L, "PS-001", "JP", "Black", new BigDecimal("180.00"), condition, status, "Updated Game Boy");
 
-        when(consoleRepository.findById(1L)).thenReturn(Optional.of(gameBoy));
-        when(consoleModelRepository.findById(1L)).thenReturn(Optional.of(gameBoyModel));
-        when(userRepository.findById(1L)).thenReturn(Optional.of(owner));
-        when(consoleRepository.findBySerialNumber("PS-001")).thenReturn(Optional.of(playStation));
+        ConsoleRequestDTO request =
+                new ConsoleRequestDTO(
+                        1L,
+                        null,
+                        1L,
+                        "PS-001",
+                        "JP",
+                        "Black",
+                        moneyDTO("180.00", "EUR"),
+                        condition,
+                        status,
+                        "Updated Game Boy"
+                );
 
-        ResourceAlreadyExistsException exception = assertThrows(ResourceAlreadyExistsException.class, () -> consoleService.updateConsole(1L, request));
+        when(consoleRepository.findById(1L))
+                .thenReturn(
+                        Optional.of(gameBoy)
+                );
 
-        assertEquals("Trying to update with invalid serialNumber PS-001 belonging to console with id 1", exception.getMessage());
-        assertEquals("GB-001", gameBoy.getSerialNumber());
+        when(consoleModelRepository.findById(1L))
+                .thenReturn(
+                        Optional.of(gameBoyModel)
+                );
 
-        verify(consoleRepository).findById(1L);
-        verify(consoleModelRepository).findById(1L);
-        verify(userRepository).findById(1L);
-        verify(consoleRepository).findBySerialNumber("PS-001");
-        verify(consoleRepository, never()).save(any(Console.class));
+        when(consoleRepository
+                .findBySerialNumber("PS-001"))
+                .thenReturn(
+                        Optional.of(playStation)
+                );
 
-        verifyNoMoreInteractions(consoleRepository);
-        verifyNoMoreInteractions(consoleModelRepository);
-        verifyNoMoreInteractions(userRepository);
-        verifyNoInteractions(repairCaseRepository);
+        ResourceAlreadyExistsException exception =
+                assertThrows(
+                        ResourceAlreadyExistsException.class,
+                        () -> consoleService
+                                .updateConsole(
+                                        1L,
+                                        request
+                                )
+                );
+
+        assertEquals(
+                "Console with serial number PS-001 already exists",
+                exception.getMessage()
+        );
+
+        verify(
+                consoleRepository,
+                never()
+        ).save(any(Console.class));
+
+        verifyNoInteractions(userRepository);
     }
 
     @Test
     void updateConsoleThrowsExceptionWhenConsoleDoesNotExist() {
-        ConsoleRequestDTO request = new ConsoleRequestDTO(1L, 1L, "GB-002", "JP", "Black", new BigDecimal("180.00"), condition, status, "Updated Game Boy");
 
-        when(consoleRepository.findById(99L)).thenReturn(Optional.empty());
+        ConsoleRequestDTO request =
+                new ConsoleRequestDTO(
+                        1L,
+                        null,
+                        1L,
+                        "GB-002",
+                        "JP",
+                        "Black",
+                        moneyDTO("180.00", "EUR"),
+                        condition,
+                        status,
+                        "Updated Game Boy"
+                );
 
-        ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class, () -> consoleService.updateConsole(99L, request));
+        when(consoleRepository.findById(99L))
+                .thenReturn(Optional.empty());
 
-        assertEquals("Console not found", exception.getMessage());
+        ResourceNotFoundException exception =
+                assertThrows(
+                        ResourceNotFoundException.class,
+                        () -> consoleService
+                                .updateConsole(
+                                        99L,
+                                        request
+                                )
+                );
 
-        verify(consoleRepository).findById(99L);
-        verifyNoMoreInteractions(consoleRepository);
-        verifyNoInteractions(consoleModelRepository, userRepository, repairCaseRepository);
+        assertEquals(
+                "Console not found",
+                exception.getMessage()
+        );
     }
 
     @Test
     void updateConsoleThrowsExceptionWhenConsoleModelDoesNotExist() {
-        ConsoleRequestDTO request = new ConsoleRequestDTO(1L, 99L, "GB-002", "JP", "Black", new BigDecimal("180.00"), condition, status, "Updated Game Boy");
 
-        when(consoleRepository.findById(1L)).thenReturn(Optional.of(gameBoy));
-        when(consoleModelRepository.findById(99L)).thenReturn(Optional.empty());
+        ConsoleRequestDTO request =
+                new ConsoleRequestDTO(
+                        1L,
+                        null,
+                        99L,
+                        "GB-002",
+                        "JP",
+                        "Black",
+                        moneyDTO("180.00", "EUR"),
+                        condition,
+                        status,
+                        "Updated Game Boy"
+                );
 
-        ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class, () -> consoleService.updateConsole(1L, request));
-        assertEquals("Console model not found", exception.getMessage());
+        when(consoleRepository.findById(1L))
+                .thenReturn(
+                        Optional.of(gameBoy)
+                );
 
-        verify(consoleRepository).findById(1L);
-        verify(consoleModelRepository).findById(99L);
-        verifyNoMoreInteractions(consoleRepository);
-        verifyNoMoreInteractions(consoleModelRepository);
-        verifyNoInteractions(userRepository, repairCaseRepository);
+        when(consoleModelRepository.findById(99L))
+                .thenReturn(Optional.empty());
+
+        ResourceNotFoundException exception =
+                assertThrows(
+                        ResourceNotFoundException.class,
+                        () -> consoleService
+                                .updateConsole(
+                                        1L,
+                                        request
+                                )
+                );
+
+        assertEquals(
+                "Console model not found",
+                exception.getMessage()
+        );
     }
 
     @Test
     void updateConsoleThrowsExceptionWhenOwnerDoesNotExist() {
-        ConsoleRequestDTO request = new ConsoleRequestDTO(99L, 1L, "GB-002", "JP", "Black", new BigDecimal("180.00"), condition, status, "Updated Game Boy");
 
-        when(consoleRepository.findById(1L)).thenReturn(Optional.of(gameBoy));
-        when(consoleModelRepository.findById(1L)).thenReturn(Optional.of(gameBoyModel));
-        when(userRepository.findById(99L)).thenReturn(Optional.empty());
+        ConsoleRequestDTO request =
+                new ConsoleRequestDTO(
+                        99L,
+                        null,
+                        1L,
+                        "GB-002",
+                        "JP",
+                        "Black",
+                        moneyDTO("180.00", "EUR"),
+                        condition,
+                        status,
+                        "Updated Game Boy"
+                );
 
-        ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class, () -> consoleService.updateConsole(1L, request));
+        when(consoleRepository.findById(1L))
+                .thenReturn(
+                        Optional.of(gameBoy)
+                );
 
-        assertEquals("User not found", exception.getMessage());
+        when(consoleModelRepository.findById(1L))
+                .thenReturn(
+                        Optional.of(gameBoyModel)
+                );
 
-        verify(consoleRepository).findById(1L);
-        verify(consoleModelRepository).findById(1L);
-        verify(userRepository).findById(99L);
-        verify(consoleRepository, never()).save(any(Console.class));
+        when(consoleRepository
+                .findBySerialNumber("GB-002"))
+                .thenReturn(Optional.empty());
 
-        verifyNoMoreInteractions(consoleRepository);
-        verifyNoMoreInteractions(consoleModelRepository);
-        verifyNoMoreInteractions(userRepository);
-        verifyNoInteractions(repairCaseRepository);
+        when(userRepository.findById(99L))
+                .thenReturn(Optional.empty());
+
+        ResourceNotFoundException exception =
+                assertThrows(
+                        ResourceNotFoundException.class,
+                        () -> consoleService
+                                .updateConsole(
+                                        1L,
+                                        request
+                                )
+                );
+
+        assertEquals(
+                "User with id 99 not found",
+                exception.getMessage()
+        );
+
+        verify(
+                consoleRepository,
+                never()
+        ).save(any(Console.class));
     }
 
-    // delete console test
+    @Test
+    void updateConsoleImageStoresImage() {
+
+        when(consoleRepository.findById(1L))
+                .thenReturn(
+                        Optional.of(gameBoy)
+                );
+
+        when(image.isEmpty())
+                .thenReturn(false);
+
+        when(imageStorageService.store(image))
+                .thenReturn(
+                        "/uploads/consoles/new.jpg"
+                );
+
+        when(consoleRepository.save(gameBoy))
+                .thenReturn(gameBoy);
+
+        ConsoleResponseDTO result =
+                consoleService.updateConsoleImage(
+                        1L,
+                        image
+                );
+
+        assertNotNull(result);
+
+        assertEquals(
+                "/uploads/consoles/new.jpg",
+                result.imageUrl()
+        );
+
+        assertEquals(
+                "/uploads/consoles/new.jpg",
+                gameBoy.getImageUrl()
+        );
+
+        verify(imageStorageService)
+                .store(image);
+
+        verify(consoleRepository)
+                .save(gameBoy);
+    }
+
+    @Test
+    void updateConsoleImageReplacesPreviousImage() {
+
+        gameBoy.setImageUrl(
+                "/uploads/consoles/old.jpg"
+        );
+
+        when(consoleRepository.findById(1L))
+                .thenReturn(
+                        Optional.of(gameBoy)
+                );
+
+        when(image.isEmpty())
+                .thenReturn(false);
+
+        when(imageStorageService.store(image))
+                .thenReturn(
+                        "/uploads/consoles/new.jpg"
+                );
+
+        when(consoleRepository.save(gameBoy))
+                .thenReturn(gameBoy);
+
+        ConsoleResponseDTO result =
+                consoleService.updateConsoleImage(
+                        1L,
+                        image
+                );
+
+        assertEquals(
+                "/uploads/consoles/new.jpg",
+                result.imageUrl()
+        );
+
+        verify(imageStorageService)
+                .delete(
+                        "/uploads/consoles/old.jpg"
+                );
+    }
+
+    @Test
+    void updateConsoleImageDeletesNewImageWhenSaveFails() {
+
+        when(consoleRepository.findById(1L))
+                .thenReturn(
+                        Optional.of(gameBoy)
+                );
+
+        when(image.isEmpty())
+                .thenReturn(false);
+
+        when(imageStorageService.store(image))
+                .thenReturn(
+                        "/uploads/consoles/new.jpg"
+                );
+
+        when(consoleRepository.save(gameBoy))
+                .thenThrow(
+                        new RuntimeException(
+                                "Database error"
+                        )
+                );
+
+        RuntimeException exception =
+                assertThrows(
+                        RuntimeException.class,
+                        () -> consoleService
+                                .updateConsoleImage(
+                                        1L,
+                                        image
+                                )
+                );
+
+        assertEquals(
+                "Database error",
+                exception.getMessage()
+        );
+
+        verify(imageStorageService)
+                .delete(
+                        "/uploads/consoles/new.jpg"
+                );
+    }
+
+    @Test
+    void updateConsoleImageThrowsExceptionWhenImageIsNull() {
+
+        when(consoleRepository.findById(1L))
+                .thenReturn(
+                        Optional.of(gameBoy)
+                );
+
+        InvalidRequestException exception =
+                assertThrows(
+                        InvalidRequestException.class,
+                        () -> consoleService
+                                .updateConsoleImage(
+                                        1L,
+                                        null
+                                )
+                );
+
+        assertEquals(
+                "An image file must be provided",
+                exception.getMessage()
+        );
+
+        verifyNoInteractions(
+                imageStorageService
+        );
+    }
+
+    @Test
+    void updateConsoleImageThrowsExceptionWhenImageIsEmpty() {
+
+        when(consoleRepository.findById(1L))
+                .thenReturn(
+                        Optional.of(gameBoy)
+                );
+
+        when(image.isEmpty())
+                .thenReturn(true);
+
+        InvalidRequestException exception =
+                assertThrows(
+                        InvalidRequestException.class,
+                        () -> consoleService
+                                .updateConsoleImage(
+                                        1L,
+                                        image
+                                )
+                );
+
+        assertEquals(
+                "An image file must be provided",
+                exception.getMessage()
+        );
+
+        verifyNoInteractions(
+                imageStorageService
+        );
+    }
+
+    @Test
+    void deleteConsoleImageDeletesImage() {
+
+        gameBoy.setImageUrl(
+                "/uploads/consoles/gameboy.jpg"
+        );
+
+        when(consoleRepository.findById(1L))
+                .thenReturn(
+                        Optional.of(gameBoy)
+                );
+
+        when(consoleRepository.save(gameBoy))
+                .thenReturn(gameBoy);
+
+        ConsoleResponseDTO result =
+                consoleService.deleteConsoleImage(1L);
+
+        assertNotNull(result);
+        assertNull(result.imageUrl());
+        assertNull(gameBoy.getImageUrl());
+
+        verify(consoleRepository)
+                .save(gameBoy);
+
+        verify(imageStorageService)
+                .delete(
+                        "/uploads/consoles/gameboy.jpg"
+                );
+    }
+
+    @Test
+    void deleteConsoleImageDoesNothingWhenImageDoesNotExist() {
+
+        gameBoy.setImageUrl(null);
+
+        when(consoleRepository.findById(1L))
+                .thenReturn(Optional.of(gameBoy));
+
+        ConsoleResponseDTO result =
+                consoleService.deleteConsoleImage(1L);
+
+        assertNotNull(result);
+        assertNull(result.imageUrl());
+
+        verify(consoleRepository).findById(1L);
+        verify(consoleRepository, never()).save(any(Console.class));
+        verifyNoInteractions(imageStorageService);
+    }
 
     @Test
     void deleteConsoleDeletesConsole() {
-        when(consoleRepository.findById(1L)).thenReturn(Optional.of(gameBoy));
 
-        when(repairCaseRepository.existsByConsoleConsoleIdAndStatusNot(1L, RepairStatus.CLOSED)).thenReturn(false);
+        when(consoleRepository.findById(1L))
+                .thenReturn(Optional.of(gameBoy));
 
         consoleService.deleteConsole(1L);
 
         verify(consoleRepository).findById(1L);
-        verify(repairCaseRepository).existsByConsoleConsoleIdAndStatusNot(1L, RepairStatus.CLOSED);
         verify(consoleRepository).delete(gameBoy);
+        verify(consoleRepository).flush();
 
-        verifyNoMoreInteractions(consoleRepository);
-        verifyNoMoreInteractions(repairCaseRepository);
-        verifyNoInteractions(consoleModelRepository, userRepository);
+        verifyNoInteractions(
+                repairCaseRepository,
+                imageStorageService
+        );
     }
 
     @Test
-    void deleteConsoleThrowsExceptionWhenConsoleHasActiveRepairCases() {
-        when(consoleRepository.findById(1L)).thenReturn(Optional.of(gameBoy));
+    void deleteConsoleDeletesStoredImage() {
 
-        when(repairCaseRepository.existsByConsoleConsoleIdAndStatusNot(1L, RepairStatus.CLOSED)).thenReturn(true);
+        gameBoy.setImageUrl(
+                "/uploads/consoles/gameboy.jpg"
+        );
 
-        ResourceInUseException exception = assertThrows(ResourceInUseException.class, () -> consoleService.deleteConsole(1L));
+        when(consoleRepository.findById(1L))
+                .thenReturn(Optional.of(gameBoy));
 
-        assertEquals("Console with id 1 cannot be deleted because it has active repair cases", exception.getMessage());
+        consoleService.deleteConsole(1L);
 
         verify(consoleRepository).findById(1L);
-        verify(repairCaseRepository).existsByConsoleConsoleIdAndStatusNot(1L, RepairStatus.CLOSED);
-        verify(consoleRepository, never()).delete(any(Console.class));
+        verify(consoleRepository).delete(gameBoy);
+        verify(consoleRepository).flush();
 
-        verifyNoMoreInteractions(consoleRepository);
-        verifyNoMoreInteractions(repairCaseRepository);
-        verifyNoInteractions(consoleModelRepository, userRepository);
+        verify(imageStorageService)
+                .delete("/uploads/consoles/gameboy.jpg");
+
+        verifyNoInteractions(repairCaseRepository);
     }
 
     @Test
     void deleteConsoleThrowsExceptionWhenConsoleDoesNotExist() {
-        when(consoleRepository.findById(99L)).thenReturn(Optional.empty());
 
-        ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class, () -> consoleService.deleteConsole(99L));
+        when(consoleRepository.findById(99L))
+                .thenReturn(Optional.empty());
 
-        assertEquals("Console not found", exception.getMessage());
+        ResourceNotFoundException exception =
+                assertThrows(
+                        ResourceNotFoundException.class,
+                        () -> consoleService
+                                .deleteConsole(99L)
+                );
 
-        verify(consoleRepository).findById(99L);
-        verify(consoleRepository, never()).delete(any(Console.class));
+        assertEquals(
+                "Console not found",
+                exception.getMessage()
+        );
 
-        verifyNoMoreInteractions(consoleRepository);
-        verifyNoInteractions(consoleModelRepository, userRepository, repairCaseRepository);
+        verify(
+                consoleRepository,
+                never()
+        ).delete(any(Console.class));
+
+        verify(
+                consoleRepository,
+                never()
+        ).flush();
     }
 
-    private Manufacturer createManufacturer(Long id, String name, String countryCode
+    private Manufacturer createManufacturer(
+            Long id,
+            String name,
+            String countryCode
     ) {
-        Manufacturer manufacturer = new Manufacturer();
+
+        Manufacturer manufacturer =
+                new Manufacturer();
+
         manufacturer.setManufacturerId(id);
         manufacturer.setManufacturerName(name);
         manufacturer.setCountryCode(countryCode);
+
         return manufacturer;
     }
 
-    private ConsoleModel createConsoleModel(Long id, String name, Integer releaseYear, Manufacturer manufacturer
+    private ConsoleModel createConsoleModel(
+            Long id,
+            String name,
+            Integer releaseYear,
+            Manufacturer manufacturer
     ) {
-        ConsoleModel consoleModel = new ConsoleModel();
+
+        ConsoleModel consoleModel =
+                new ConsoleModel();
+
         consoleModel.setConsoleModelId(id);
         consoleModel.setConsoleModelName(name);
         consoleModel.setReleaseYear(releaseYear);
         consoleModel.setManufacturer(manufacturer);
+
         return consoleModel;
     }
 
-    private User createUser(Long id) {
+    private User createUser(
+            Long id,
+            String name
+    ) {
+
         User user = new User();
+
         user.setId(id);
+        user.setName(name);
+
         return user;
     }
 
-    private Console createConsole(Long id, User owner, ConsoleModel consoleModel, String serialNumber, String region, String color, Condition condition, BigDecimal estimatedValue, Status status, String notes
+    private Console createConsole(
+            Long id,
+            User owner,
+            String externalOwnerName,
+            ConsoleModel consoleModel,
+            String serialNumber,
+            String region,
+            String color,
+            Condition condition,
+            Money estimatedValue,
+            Status status,
+            String notes,
+            String imageUrl
     ) {
-        Console console = new Console();
+
+        Console console =
+                new Console();
+
         console.setConsoleId(id);
         console.setOwner(owner);
-        console.setConsoleModel(consoleModel);
-        console.setSerialNumber(serialNumber);
+        console.setExternalOwnerName(
+                externalOwnerName
+        );
+        console.setConsoleModel(
+                consoleModel
+        );
+        console.setSerialNumber(
+                serialNumber
+        );
         console.setRegion(region);
         console.setColor(color);
         console.setCondition(condition);
-        console.setEstimatedValue(estimatedValue);
+        console.setEstimatedValue(
+                estimatedValue
+        );
         console.setStatus(status);
         console.setNotes(notes);
+        console.setImageUrl(imageUrl);
+
         return console;
+    }
+
+    private Money money(
+            String amount,
+            String currency
+    ) {
+
+        return new Money(
+                new BigDecimal(amount),
+                currency
+        );
+    }
+
+    private MoneyDTO moneyDTO(
+            String amount,
+            String currency
+    ) {
+
+        return new MoneyDTO(
+                new BigDecimal(amount),
+                currency
+        );
     }
 }

@@ -1,7 +1,10 @@
 package uoc.edu.model;
 
 import jakarta.persistence.*;
+
+import java.util.ArrayList;
 import java.util.List;
+
 @Entity
 public class ConsoleModel {
 
@@ -14,11 +17,21 @@ public class ConsoleModel {
     private Integer releaseYear;
 
     @ManyToOne
-    @JoinColumn(name = "manufacturer_id")
+    @JoinColumn(name = "manufacturer_id", nullable = false)
     private Manufacturer manufacturer;
+    @OneToMany(
+            mappedBy = "consoleModel",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
+    private List<Console> consoles = new ArrayList<>();
 
-    @OneToMany(mappedBy = "consoleModel")
-    private List<Component> components;
+    @OneToMany(
+            mappedBy = "consoleModel",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
+    private List<Component> components = new ArrayList<>();
 
     public ConsoleModel(Long consoleModelId, String consoleModelName, Integer releaseYear, Manufacturer manufacturer, List<Component> components) {
         this.consoleModelId = consoleModelId;

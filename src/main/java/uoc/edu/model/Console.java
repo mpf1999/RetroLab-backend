@@ -11,6 +11,9 @@ public class Console {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long consoleId;
 
+    @Column(name = "external_owner_name", length = 100)
+    private String externalOwnerName;
+
     @Column(nullable = false, unique = true)
     private String serialNumber;
 
@@ -20,7 +23,9 @@ public class Console {
     @Enumerated(EnumType.STRING)
     private Status status;
 
-    private BigDecimal estimatedValue;
+    @Embedded
+    private Money estimatedValue;
+
     @Column(columnDefinition = "TEXT")
     private String notes;
 
@@ -35,14 +40,20 @@ public class Console {
     @Enumerated(EnumType.STRING)
     private Condition condition;
 
-    @OneToMany(mappedBy = "console")
+    @OneToMany(mappedBy = "console",
+    cascade = CascadeType.ALL,
+    orphanRemoval = true)
     private List<RepairCase> repairCases;
+
+    @Column()
+    private String imageUrl;
 
     public Console() {
     }
 
-    public Console(Long consoleId, String serialNumber, String region, String color, Status status, BigDecimal estimatedValue, String notes, ConsoleModel consoleModel, User owner, Condition condition, List<RepairCase> repairCases) {
+    public Console(Long consoleId, String externalOwnerName, String serialNumber, String region, String color, Status status, Money estimatedValue, String notes, ConsoleModel consoleModel, User owner, Condition condition, List<RepairCase> repairCases, String imageUrl) {
         this.consoleId = consoleId;
+        this.externalOwnerName = externalOwnerName;
         this.serialNumber = serialNumber;
         this.region = region;
         this.color = color;
@@ -53,6 +64,15 @@ public class Console {
         this.owner = owner;
         this.condition = condition;
         this.repairCases = repairCases;
+        this.imageUrl = imageUrl;
+    }
+
+    public String getExternalOwnerName() {
+        return externalOwnerName;
+    }
+
+    public void setExternalOwnerName(String externalOwnerName) {
+        this.externalOwnerName = externalOwnerName;
     }
 
     public List<RepairCase> getRepairCases() {
@@ -119,11 +139,11 @@ public class Console {
         this.status = status;
     }
 
-    public BigDecimal getEstimatedValue() {
+    public Money getEstimatedValue() {
         return estimatedValue;
     }
 
-    public void setEstimatedValue(BigDecimal estimatedValue) {
+    public void setEstimatedValue(Money estimatedValue) {
         this.estimatedValue = estimatedValue;
     }
 
@@ -141,5 +161,13 @@ public class Console {
 
     public void setConsoleModel(ConsoleModel consoleModel) {
         this.consoleModel = consoleModel;
+    }
+
+    public String getImageUrl() {
+        return imageUrl;
+    }
+
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
     }
 }

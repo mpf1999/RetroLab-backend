@@ -62,7 +62,7 @@ class ComponentServiceTest {
 
         gameBoyScreen = createComponent(1L, "Screen", "Original LCD screen", gameBoyModel);
         gameBoySpeaker = createComponent(2L, "Speaker", "Internal mono speaker", gameBoyModel);
-        }
+    }
 
     // get all components test
 
@@ -120,7 +120,7 @@ class ComponentServiceTest {
 
         when(componentRepository.findById(1L)).thenReturn(Optional.of(gameBoyScreen));
 
-        ComponentResponseDTO result =componentService.getComponentById(1L);
+        ComponentResponseDTO result = componentService.getComponentById(1L);
 
         assertNotNull(result);
         assertAll(
@@ -154,13 +154,17 @@ class ComponentServiceTest {
     @Test
     void addComponentReturnsCreatedComponent() {
 
-        ComponentRequestDTO request =new ComponentRequestDTO(1L, "Power switch", "Console power switch");
+        ComponentRequestDTO request = new ComponentRequestDTO(1L, "Power switch", "Console power switch");
 
         when(componentRepository.findByConsoleModelConsoleModelIdAndName(1L, "Power switch")).thenReturn(Optional.empty());
         when(consoleModelRepository.findById(1L)).thenReturn(Optional.of(gameBoyModel));
-        when(componentRepository.save(any(Component.class))).thenAnswer(invocation -> {Component component = invocation.getArgument(0);component.setComponentId(4L);return component;});
+        when(componentRepository.save(any(Component.class))).thenAnswer(invocation -> {
+            Component component = invocation.getArgument(0);
+            component.setComponentId(4L);
+            return component;
+        });
 
-        ComponentResponseDTO result =componentService.addComponent(request);
+        ComponentResponseDTO result = componentService.addComponent(request);
         assertNotNull(result);
         assertAll(
                 () -> assertEquals(4L, result.componentId()),
@@ -203,8 +207,8 @@ class ComponentServiceTest {
         );
 
         verify(componentRepository).findByConsoleModelConsoleModelIdAndName(
-                        1L,
-                        "Power regulator"
+                1L,
+                "Power regulator"
         );
         verify(consoleModelRepository).findById(1L);
 
@@ -419,37 +423,21 @@ class ComponentServiceTest {
     @Test
     void deleteComponentDeletesComponent() {
 
-        when(componentRepository.findById(1L)).thenReturn(Optional.of(gameBoyScreen));
-        when(componentTestRepository.existsByComponentComponentId(1L)).thenReturn(false);
+        Component componentToDelete = new Component();
+        componentToDelete.setComponentId(1L);
+        componentToDelete.setName("Screen");
+        componentToDelete.setDescription("Game Boy LCD screen");
+        componentToDelete.setConsoleModel(gameBoyModel);
+
+        when(componentRepository.findById(1L))
+                .thenReturn(Optional.of(componentToDelete));
 
         componentService.deleteComponent(1L);
 
         verify(componentRepository).findById(1L);
-        verify(componentTestRepository).existsByComponentComponentId(1L);
-        verify(componentRepository).delete(gameBoyScreen);
+        verify(componentRepository).delete(componentToDelete);
 
-        verifyNoMoreInteractions(componentRepository);
-        verifyNoMoreInteractions(componentTestRepository);
-        verifyNoInteractions(consoleModelRepository);
-    }
-
-    @Test
-    void deleteComponentThrowsExceptionWhenComponentHasAssociatedTests() {
-
-        when(componentRepository.findById(1L)).thenReturn(Optional.of(gameBoyScreen));
-        when(componentTestRepository.existsByComponentComponentId(1L)).thenReturn(true);
-
-        ResourceInUseException exception = assertThrows(ResourceInUseException.class, () -> componentService.deleteComponent(1L));
-
-        assertEquals("Cannot delete a component with associated component tests", exception.getMessage());
-
-        verify(componentRepository).findById(1L);
-        verify(componentTestRepository).existsByComponentComponentId(1L);
-        verify(componentRepository, never()).delete(any(Component.class));
-
-        verifyNoMoreInteractions(componentRepository);
-        verifyNoMoreInteractions(componentTestRepository);
-        verifyNoInteractions(consoleModelRepository);
+        verifyNoInteractions(componentTestRepository);
     }
 
     @Test
