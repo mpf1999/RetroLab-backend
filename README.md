@@ -2,7 +2,7 @@
 
 **RetroLab** is a backend application designed to manage retro console inventories, repair workflows and electronic diagnostic measurements.
 
-It was developed as a Final Degree Project at the Universitat Oberta de Catalunya (UOC). The application provides a REST API that allows users to manage manufacturers, console models, consoles, repair cases, components and diagnostic tests.
+The application provides a REST API that allows users to manage manufacturers, console models, consoles, repair cases, components and diagnostic tests.
 
 The backend also provides JWT authentication, console image management, automatic development data initialization and interactive API documentation through Swagger.
 
@@ -460,10 +460,5 @@ spring.jpa.hibernate.ddl-auto=create-drop
 
 The database is recreated for every development execution.
 
-## Project status
-
-RetroLab Backend is an academic project developed as part of a UOC Final Degree Project.
-
 ## Author
 **Manuel Pérez Feria**
-Universitat Oberta de Catalunya
